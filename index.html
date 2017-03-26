@@ -7,8 +7,10 @@
 body
 {
 	background-color:	#fff;
-	color:			#000;
+	color:				#000;
 	font-family:		"futura-pt",sans-serif;
+	margin:				0px;
+	padding:			0px;
 }
 
 h2
@@ -21,6 +23,10 @@ h2
 a
 {
 	color:			#c30;
+}
+
+header a
+{
 	font-size:		12pt;
 	font-style:		normal;
 	font-weight:		700;
@@ -29,13 +35,107 @@ a
 
 .Center
 {
-	margin:		20% auto;
+	margin:		10vh auto 0px auto ;
 	display:	block;
 	text-align:	center;
 }
 header h1
 {
 	display:none;
+}
+
+.ClearFloat
+{
+	clear:	both;
+}
+
+ul#Portfolio
+{
+	width:		100vw;
+	margin:		0px 10px 0px 0px;
+	padding:	0px;
+	position:	relative;
+	list-style-type:	none;
+}
+
+#Portfolio li
+{
+	z-index:	0;
+	background:	black;
+	height:		40vmin;
+	float:		left;
+	width:		33vw;
+	position:	relative;
+	margin:		0px 0px 0px 10px;
+	
+	overflow:hidden;
+}
+
+/*	top borders */
+#Portfolio h2,
+#Portfolio img,
+#Portfolio li
+{
+	border-top-left-radius:		2vmin;
+	border-top-right-radius:	10vmin;
+}
+
+/*	bottom borders */
+#Portfolio img,
+#Portfolio p.Description,
+#Portfolio li
+{
+	border-bottom-left-radius:	10vmin;
+	border-bottom-right-radius:	5vmin;
+}
+
+#Portfolio h2
+{
+	margin:		0px;
+	padding:	0px 0px 0px 10px;
+}
+
+/* portfolio overlay */
+#Portfolio h2,
+#Portfolio p.Description
+{
+	background-color:rgba(0, 0, 0, 0.5);
+	text-decoration:	none;
+	color:				#fff;
+}
+
+#Portfolio img
+{
+	xxmax-width:	100%;
+	min-width:	100%;
+	xxmax-height:	100%;
+	min-height:	100%;
+	
+	
+	position:	absolute;
+	z-index:	-1;
+	top:		0px;
+	margin:		0px;
+	padding:	0px;
+	overflow:	hidden;
+}
+
+#Portfolio p.Date
+{
+	position:	absolute;
+	top:		0px;
+	right:		10px;
+	float:		right;
+	color:		#fff;
+}
+
+#Portfolio p.Description
+{
+	font-family:	"Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	margin:		0px;
+	padding:	5px 5px 5px 10vmin;
+	position:	absolute;
+	bottom:		0px;
 }
 
 </style>
@@ -51,5 +151,27 @@ header h1
 		<p>London.</p>
 		</div>
 	</header>
+	
+	<ul id=Portfolio>
+		
+		<li><a href=http://analogstudio.co.uk/work/three>
+			<h2>Three commerical</h2>
+			<img src=three.gif>
+			<p class=Date>June 2016</p>
+			<p class=Description>CAVE realtime, sound reactive &amp; user-controlled visuals for the background of a commerical.</p>
+			</a>
+		</li>
+	
+		
+		<li><a href=https://github.com/SoylentGraham/gba_hockey><img src=hockey.gif>
+			<h2>GBA Hockey</h2>
+			<p class=Date>September 2003</p>
+			<p class=Description>Homebrew GBA NHLPA clone, source code on github along with a ROM which works on emulators and flashable carts.</p>
+			</a>
+		</li>
+	</ul>
+	
+	<div class=ClearFloat></div>
+	
 </body>
 </html>
