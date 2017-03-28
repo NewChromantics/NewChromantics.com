@@ -11,6 +11,7 @@ body
 	font-family:		"futura-pt",sans-serif;
 	margin:				0px;
 	padding:			0px;
+	overflow-x:			hidden;
 }
 
 h2
@@ -70,17 +71,40 @@ ul#Portfolio
 	position:	relative;
 	margin:		0px;
 	
-	overflow:hidden;
+	overflow:	hidden;
 }
 
-@media only screen
-and (min-device-width : 375px)
-and (max-device-width : 667px)
-and (orientation : portrait)
+
+@media only screen and (max-device-width:1024px)
 {
-	width:		100vw;
+	#Portfolio li
+	{
+		width:		50vw;
+	}
+}
+@media only screen and (max-width:1024px)
+{
+	#Portfolio li
+	{
+		width:		50vw;
+	}
 }
 
+@media only screen and (max-device-width:500px)
+{
+	#Portfolio li
+	{
+		width:		100vw;
+	}
+}
+
+@media only screen and (max-width:500px)
+{
+	#Portfolio li
+	{
+		width:		100vw;
+	}
+}
 
 /*	top borders */
 #Portfolio h2,
