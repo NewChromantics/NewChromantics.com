@@ -4,306 +4,202 @@
 <title>New Chromantics - London based Computer Vision, Virtual, Augmented and Mixed Reality developers</title>
 <style type=text/css>
 
+@font-face {
+	font-family: Futura;
+	src: url("FuturaStd-Bold.otf") format("opentype");
+}
+
 body
 {
-	background-color:	#0ff;
+	background-color:	#fff;
 	color:				#000;
-	font-family:		"futura-pt",sans-serif;
+	font-family:		"Verdana";
 	margin:				0px;
 	padding:			0px;
 	overflow-x:			hidden;
+	display:			flex;
+	justify-content:	center;
+	flex-wrap:			wrap;
 }
 
-h2
+
+h1,h2,h3,h4
 {
-	font-size:		30pt;
-	letter-spacing:		-2px;
-	font-weight:		600;
+	font-family:		"Futura",sans-serif;
+
 }
 
-a
+
+body > div
 {
-	color:			#fff;
-}
-
-header a
-{
-	font-size:		12pt;
-	font-style:		normal;
-	font-weight:		700;
-	letter-spacing:		4px;
-	text-decoration:	none;
-}
-
-.Center
-{
-	margin:		10vh auto 0px auto ;
-	display:	block;
-	text-align:	center;
-}
-header h1
-{
-	display:	none;
-}
-
-.ClearFloat
-{
-	clear:	both;
-}
-
-ul#Portfolio
-{
-	width:		100vw;
-	margin:		0px;
-	padding:	0px;
-	position:	relative;
-	list-style-type:	none;
+	width:		50vw;
 }
 
 
-#Portfolio li
-{
-	z-index:	0;
-	xbackground:	black;
-	height:		50vmin;
-	float:		left;
-	width:		33.3vw;
-	position:	relative;
-	margin:		0px;
-	
-	overflow:	hidden;
-}
-
-
-@media only screen and (max-device-width:1024px)
-{
-	#Portfolio li
-	{
-		width:		50vw;
-	}
-}
-@media only screen and (max-width:1024px)
-{
-	#Portfolio li
-	{
-		width:		50vw;
-	}
-}
-
-@media only screen and (max-device-width:500px)
-{
-	#Portfolio li
-	{
-		width:		100vw;
-	}
-}
-
-@media only screen and (max-width:500px)
-{
-	#Portfolio li
-	{
-		width:		100vw;
-	}
-}
-
-/*	top borders */
-#Portfolio h2,
-#Portfolio img,
-#Portfolio li
-{
-	border-top-left-radius:		0vmin;
-	border-top-right-radius:	0vmin;
-}
-
-/*	bottom borders */
-#Portfolio img,
-#Portfolio p.Description,
-#Portfolio li
-{
-	border-bottom-left-radius:	0vmin;
-	border-bottom-right-radius:	0vmin;
-}
-
-
-
-#Portfolio h2
-{
-	margin:		0px;
-	padding:	0px 0px 0px 10px;
-}
-
-/* portfolio overlay */
-#Portfolio h2,
-#Portfolio p.Description
-{
-	text-decoration:	none;
-	color:				#fff;
-	display:			block;
-}
-
-#Portfolio img
-{
-	xxmax-width:	100%;
-	min-width:	100%;
-	xxmax-height:	100%;
-	min-height:	100%;
-	
-	
-	position:	absolute;
-	z-index:	-1;
-	top:		0px;
-	margin:		0px;
-	padding:	0px;
-	overflow:	hidden;
-}
-
-#Portfolio p.Date
-{
-	position:	absolute;
-	top:		0px;
-	right:		10px;
-	float:		right;
-	color:		#fff;
-}
-
-#Portfolio p.Description
-{
-	font-family:	"Lucida Sans Unicode", "Lucida Grande", sans-serif;
-	margin:		2vmin;
-	padding:	2vmin;
-	position:	absolute;
-	bottom:		0px;
-	background-color:rgba(0, 255, 255, 0.8);
-	
-	border-top-left-radius:		2vmin;
-	border-top-right-radius:	2vmin;
-	border-bottom-left-radius:	2vmin;
-	border-bottom-right-radius:	2vmin;
-}
-
-#Portfolio #NewChromantics p.Description
-{
-	position:	relative;
-	xbackground-color:rgba(0, 255, 255, 1.0);
-	background-color:rgba(0, 0, 0, 0.2);
-	
-}
 
 </style>
 </head>
 <body>
 
+	<div>
+	<h1>New Chromantics</h1>
+	<p>Specialist Computer Vision, Virtual, Augmented &amp; Mixed Reality developers.</p>
+	<p>Based in London.</p>
+	<p>Contact <a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a>
+	<p class=Description>Open source projects &amp; code <a href=https://github.com/NewChromantics>NewChromantics</a> and <a href=https://github.com/SoylentGraham/>SoylentGraham</a> on github.</p>
+	</div>
 
-	<ul id=Portfolio>
-		
-		<li id=NewChromantics>
-			<h2>New Chromantics</h2>
-				<p class=Date>London</p>
-				<p class=Description>Specialist Computer Vision, Virtual, Augmented &amp; Mixed Reality developers.</p>
-				<p class=Description>Contact <a href=mailto:graham@newchromantics.com>graham@newchromantics.com</a> for commissioned work, consulting or if you're just curious about any of these projects.</p>
-				<p class=Description><a href=https://twitter.com/soylentgraham>@Soylentgraham</a> on twitter.</p>
-				<p class=Description>Open source projects &amp; code <a href=https://github.com/NewChromantics>NewChromantics</a> and <a href=https://github.com/SoylentGraham/>SoylentGraham</a> on github.</p>
-		</li>
-		
-		<li><a href=#>
-			<h2>GearVR Pointcloud</h2>
-			<img src=iteota.gif>
-				<p class=Date>January 2017</p>
-				<p class=Description>High performance dense point cloud rendering (6m cloud, 250k on-screen) on GearVR at 60fps.</p>
-				</a>
-		</li>
-		
-		<li><a href=https://www.youtube.com/watch?v=4-3SK3Eik_s>
-			<h2>Vincent Van Pop</h2>
-			<img src=vincentvanpop.gif>
-				<p class=Date>December 2016</p>
-				<p class=Description>Experimental GPU-painting in VR (HTC Vive).</p>
-				</a>
-		</li>
+	<div>
+		<a href=http://holosports.co><h2>Holosports</h2></a>
+		<p class=Date>2018/2019</p>
+		<p class=Description>On going project working on real-time sports capture, creating volumetric content for AR devices &amp; TV bullet-time review.</p>
+	</div>
 	
+	<div>
+		<h2>Gorillaz x G-Shock</h2>
+		<p>with Analog</p>
+		<p class=Date>September 2018</p>
+		<p class=Description>Using deep-learning prediction, we did live capture of actors puppetering drawings, rendered in unity, for on-set visualisation (and later production) of an interview of the Gorillaz with Mr Ibe.</p>
+	</div>
 	
-		<li><a href=http://analogstudio.co.uk/work/three>
-			<h2>Three commerical</h2>
-			<img src=three.gif>
-			<p class=Date>June 2016</p>
-			<p class=Description>CAVE realtime, sound reactive &amp; user-controlled visuals for the background of a commerical.</p>
-			</a>
-		</li>
-		
-		<li><a href=#>
-			<h2>Raymarched pointclouds</h2>
-			<img src=pointcloudraymarch.gif>
-				<p class=Date>December 2015</p>
-				<p class=Description>Experimenting with rendering point clouds solidly with raymarching, using live kinect feeds.</p>
-				</a>
-		</li>
-
-		
-		<li><a href=#>
-			<h2>PopTrack</h2>
-			<img src=poptrack.gif>
-				<p class=Date>August 2015</p>
-				<p class=Description>Realtime (sub 50ms) player-extraction &amp; tracking from 4K video using GPGPU/OpenCL. Ongoing project (HoloSports)</p>
-				</a>
-		</li>
-
-
-		<li><a href=http://rewind.co/portfolio/nissan-champions-league/>
-			<h2>Nissan CAVE</h2>
-			<img src=championsleaguecave.jpg>
-				<p class=Date>May 2015</p>
-				<p class=Description>Whilst at Rewind we created an interactive CAVE using projectors, realtime rendering and Kinects for a Nissan &amp; Champions League project</p>
-				</a>
-		</li>
-
-
-		<li><a href=#>
-			<h2>Ball filtering</h2>
-			<img src=ballfilter.gif>
-				<p class=Date>May 2015</p>
-				<p class=Description>From a kinect1 depth stream, with a little Pixel Shader computer vision I tracked a football in realtime for a CAVE project.</p>
-				</a>
-		</li>
-		
-		<li><a href=http://rewind.co/portfolio/bjork-stonemilker-vr/>
-			<h2>Bj&ouml;rk: Stonemilker</h2>
-			<img src=stonemilker.gif>
-				<p class=Date>April 2015</p>
-				<p class=Description>Created the app &amp; delivery of Bj&ouml;rk's Stonemilker 360 music video for MOMA with a bespoke movie player for iOS and GearVR.</p>
-				</a>
-				</li>
-		
-		
-		<li><a href=http://popmovie.xyz>
-			<h2>PopMovie</h2>
-			<img src=popmovie.jpg>
-				<p class=Date>April 2015 - 2017</p>
-				<p class=Description>Video decoder plugin for Unity, for Windows, OSX, Android, Hololens, iOS, PS4.</p>
-				</a>
-		</li>
-		
-		<li><a href=#>
-			<h2>Google streetview VR Pointcloud</h2>
-			<img src=streetviewpointcloud.gif>
-				<p class=Date>October 2014</p>
-				<p class=Description>For the Oculus DK2, I rendered colour &amp; depth from google streetview coordinates as a point cloud with 6DOF headtracking in webgl/three.js.</p>
-				</a>
-		</li>
-		
-		<li><a href=https://github.com/SoylentGraham/gba_hockey><img src=hockey.gif>
-			<h2>GBA Hockey</h2>
-			<p class=Date>September 2003</p>
-			<p class=Description>Homebrew Gameboy Advance NHLPA clone, source code on github along with a ROM which works on emulators and flashable carts.</p>
-			</a>
-		</li>
-		
-		<li id=NewChromantics>
-			<p class=Description>2001-2013 CV of <a href=cv.html>Graham Reeves</a>.</p>
-		</li>
-		
-	</ul>
+	<div>
+		<h2>Voltarol</h2>
+		<p>with Analog</p>
+		<p class=Date>April 2018</p>
+		<p class=Description>Experimenting with some computer vision, mixed with live motion-capture suits to give on-set visualisation of capture aligned with the set to aid VFX creation.</p>
+	</div>
 	
-	<div class=ClearFloat></div>
+	<div>
+		<h2>Somnai</h2>
+		<p>with MixedImmersion</p>
+		<p class=Date>February 2018</p>
+		<p class=Description>Helped MixedImmersion with project integration.</p>
+	</div>
+	
+	<div>
+		<h2>First-Order Stormtrooper Robot</h2>
+		<p>with SideDish Productions/UBTech</p>
+		<p class=Date>December 2017</p>
+		<p class=Description>Added live camera decoding from UBTech's Stormtrooper robot to their companion app, just in time for christmas. (Christmas Eve in fact!)</p>
+	</div>
+
+	<div>
+		<h2>Loreal on-boarding experience</h2>
+		<p>with Contented Brothers</p>
+		<p class=Date>November 2017</p>
+		<p class=Description>Interactive 360 video to give job applicants an insight on the kinds of challenges required at an agency.</p>
+	</div>
+
+	<div>
+		<h2>Unreleased BladeRunner 2049 VR Project</h2>
+		<p>with Analog</p>
+		<p class=Date>August 2017</p>
+		<p class=Description>We created a game/experience hybrid for the Oculus GearVR tieing in with the new Bladerunner 2049 film.</p>
+	</div>
+	
+	<div>
+		<h2>Vera</h2>
+		<p>with ButchAuntie</p>
+		<p class=Date>July 2017</p>
+		<p class=Description>Using Vive controllers independent of a headset, we experimented with sound and vision/projection with Moving Memory to encourage movement and dance in older people.</p>
+	</div>
+	
+	<div>
+		<h2>Untitled VR Gesture Recognition</h2>
+		<p class=Date>February 2017</p>
+		<p class=Description>For an unnamed client, I implemented some R&amp;D with gesture recording &amp; recognition using Vive controllers.</p>
+	</div>
+
+
+	<div>
+		<h2>In The Eyes Of The Animal</h2>
+		<p>with Marshmallow Laser Feast</p>
+		<p class=Date>January 2017</p>
+		<p class=Description>High performance dense point cloud rendering (6m cloud, 250k on-screen) on GearVR at 60fps. The ITEOTA app is availible for Oculus Gearvr &amp; Oculus Go</p>
+	</div>
+	
+	<div>
+	<h2>Vincent Van Pop</h2>
+	<p class=Date>December 2016</p>
+	<p class=Description>Experimental GPU-painting in VR (HTC Vive).</p>
+	</div>
+	
+	<div>
+	<h2>Three commerical</h2>
+	<p class=Date>June 2016</p>
+	<p class=Description>CAVE realtime, sound reactive &amp; user-controlled visuals for the background of a commerical.</p>
+	</div>
+		
+	<div>
+	<h2>Raymarched pointclouds</h2>
+	<p class=Date>December 2015</p>
+	<p class=Description>Experimenting with rendering point clouds solidly with raymarching, rather than outdated triangle/point polygon rendering, using live kinect feeds.</p>
+	</div>
+	
+		
+	<div>
+	<h2>PopTrack</h2>
+	<p class=Date>August 2015</p>
+	<p class=Description>Realtime (sub 50ms) player-extraction &amp; tracking from 4K video using GPGPU/OpenCL. Now reborn as <a href=http://holosports.co/>HoloSports</a></p>
+	</div>
+
+
+	<div>
+	<h2>Nissan CAVE</h2>
+	<p class=Date>May 2015</p>
+	<p class=Description>Whilst at Rewind we created an interactive CAVE using projectors, realtime rendering and Kinects for a Nissan &amp; Champions League project</p>
+	</div>
+
+	<div>
+	<h2>Ball Filtering</h2>
+	<p class=Date>May 2015</p>
+	<p class=Description>From a kinect1 depth stream, with a Pixel Shader computer vision I tracked a football in realtime for a CAVE project.</p>
+	</div>
+		
+	<div>
+	<h2>Bj&ouml;rk: Stonemilker</h2>
+	<p class=Date>April 2015</p>
+	<p class=Description>Created the app &amp; delivery of Bj&ouml;rk's Stonemilker 360 music video for MOMA with a bespoke movie player for iOS and GearVR.</p>
+	</div>
+		
+		
+	<div>
+	<h2>PopMovie</h2>
+	<p class=Date>April 2015 - 2017</p>
+	<p class=Description>Video decoder plugin for Unity, for Windows, OSX, Android, Hololens, iOS, PS4.</p>
+	</div>
+	
+
+	<div>
+		<h2>Google Streetview VR Pointcloud</h2>
+		<p class=Date>October 2014</p>
+		<p class=Description>For the Oculus DK2, I rendered colour &amp; depth from google streetview coordinates as a point cloud with 6DOF headtracking in webgl/three.js.
+	</div>
+
+	<div>
+		<a href=https://en.wikipedia.org/wiki/Ice_Age_2:_The_Meltdown_(video_game)><h2>Ice Age 2: The Meltdown </h2></a>
+		<p class=Date>March 2006</p>
+		<p class=Description>Video game based on the film, released on the PS2, Gamecube, XBox, PC &amp; the Wii. Developed on the second Wii Devkit in the UK.</p>
+	</div>
+	
+	<div>
+		<a href=https://en.wikipedia.org/wiki/Robots_(2005_video_game)><h2>Robots</h2></a>
+		<p class=Date>February 2005</p>
+		<p class=Description>Video game based on the film, released on the PS2, Gamecube, XBox &amp; PC</p>
+	</div>
+
+	<div>
+		<a href=https://github.com/SoylentGraham/gba_hockey><h2>GBA Hockey (Homebrew)</h2></a>
+		<p class=Date>September 2003</p>
+		<p class=Description>Homebrew Gameboy Advance NHLPA clone, <a href=https://github.com/SoylentGraham/gba_hockey>source code on github</a> along with a ROM which works on emulators and flashable carts.</p>
+	</div>
+	
+
+	<div>
+		<a href=https://en.wikipedia.org/wiki/Buffy_the_Vampire_Slayer:_Chaos_Bleeds><h2>Buffy the Vampire Slayer: Chaos Bleeds</h2></a>
+		<p class=Date>August 2001-August 2003</p>
+		<p class=Description>Buffy the vampire slayer for the PS2, Gamecube &amp; XBox</p>
+	</div>
 	
 </body>
 </html>
