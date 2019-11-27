@@ -1,4 +1,4 @@
-attribute vec2 Vertex;
+attribute vec2 VertexIndexTriangleIndex;
 varying vec2 TriangleUv;
 
 uniform sampler2D WorldPositions;
@@ -34,16 +34,15 @@ vec3 GetTriangleWorldPos(int TriangleIndex)
 {
 	float2 uv = GetTriangleUv( TriangleIndex );
 	float Lod = 0.0;
-	float3 xyz = textureLod( WorldPositions, uv, Lod ).xyz;
-	return xyz;
+	float2 xy = textureLod( WorldPositions, uv, Lod ).xy;
+	return float3(xy,0);
 }
 
 float GetTriangleLocalScale(int TriangleIndex)
 {
 	float2 uv = GetTriangleUv( TriangleIndex );
 	float Lod = 0.0;
-	//	gr: this is wierdly always 1
-	float Radius = textureLod( WorldPositions, uv, Lod ).w;
+	float Radius = textureLod( WorldPositions, uv, Lod ).z;
 
 	//	bad texture?
 	if ( Radius == 0.0 )
@@ -60,8 +59,8 @@ float GetTriangleLocalScale(int TriangleIndex)
 
 void main()
 {
-	int VertexIndex = int(Vertex.x);
-	int TriangleIndex = int(Vertex.y);
+	int VertexIndex = int(VertexIndexTriangleIndex.x);
+	int TriangleIndex = int(VertexIndexTriangleIndex.y);
 	
 	float3 VertexPos = LocalPositions[VertexIndex] * GetTriangleLocalScale(VertexIndex);
 	float3 LocalPos = VertexPos;
