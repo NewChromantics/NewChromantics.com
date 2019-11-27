@@ -5,6 +5,7 @@ varying vec2 uv;
 uniform float SdfMin;
 uniform float SampleDelta;
 uniform float ProjectionAspectRatio;
+uniform int SampleWeightSigma;
 
 float opSmoothUnion( float d1, float d2, float k ) {
 	float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
@@ -15,7 +16,7 @@ float opSmoothUnion( float d1, float d2, float k ) {
 float GetOffsetSample(float2 uv,float2 Offset)
 {
 	uv += Offset;
-	uv.y = 1.0 - uv.y;
+	//uv.y = 1.0 - uv.y;
 	float Sample = texture( Texture, uv ).z;
 	return Sample;
 }
@@ -75,7 +76,6 @@ void GetKernelWeights_Average(out float Weights[5*5])
 	}
 }
 
-uniform int SampleWeightSigma;
 
 float GetSample(float2 uv)
 {
@@ -108,13 +108,37 @@ float GetSample(float2 uv)
 	return Sample;
 }
 
+float Range(float Min,float Max,float Value)
+{
+	return (Value-Min) / (Max-Min);
+}
+
+float3 NormalToRedGreen(float Normal)
+{
+	if ( Normal < 0.5 )
+	{
+		Normal = Normal / 0.5;
+		return float3( 1.0, Normal, 0.0 );
+	}
+	else if ( Normal <= 1.0 )
+	{
+		Normal = (Normal-0.5) / 0.5;
+		return float3( 1.0-Normal, 1.0, 0.0 );
+	}
+	
+	//	>1
+	return float3( 0,0,1 );
+}
+
 void main()
 {
 	float Sample = GetSample( uv );
 
 	if ( Sample >= SdfMin )
 	{
-		gl_FragColor = float4(1,1,1,1);
+		float Scale = Range( SdfMin, 1.0, Sample );
+		gl_FragColor.w = 1.0;
+		gl_FragColor.xyz = NormalToRedGreen(Scale);
 		return;
 	}
 

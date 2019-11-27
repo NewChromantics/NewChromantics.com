@@ -14,10 +14,15 @@ SetGlobal.call(this);
 
 
 const LogoParticleShader = RegisterShaderAssetFilename('Logo/LogoParticle.frag.glsl','Logo/LogoParticle.vert.glsl');
+const LogoSdfShader = RegisterShaderAssetFilename('Logo/LogoSdf.frag.glsl','Logo/Quad.vert.glsl');
+const BlitTextureShader = RegisterShaderAssetFilename('Logo/Blit.frag.glsl','Logo/Quad.vert.glsl');
 
 Pop.AsyncCacheAssetAsString('Logo/LogoParticle.frag.glsl');
 Pop.AsyncCacheAssetAsString('Logo/LogoParticle.vert.glsl');
 Pop.AsyncCacheAssetAsString('Logo/Logo.svg.json');
+Pop.AsyncCacheAssetAsString('Logo/LogoSdf.frag.glsl');
+Pop.AsyncCacheAssetAsString('Logo/Blit.frag.glsl');
+Pop.AsyncCacheAssetAsString('Logo/Quad.vert.glsl');
 
 
 
@@ -36,11 +41,15 @@ Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
 Params.HeightMapStepBack = 0.30;
-Params.LocalScale = 0.1;
+Params.LocalScale = 0.12;
 Params.WorldScale = 1.00;
 Params.ParticleCount = 5000;
-Params.DebugParticles = true;
+Params.DebugParticles = false;
+Params.DebugSdf = false;
 Params.BackgroundColour = [0,0,0];
+Params.SdfMin = 0.3;
+Params.SampleDelta = 0.005;
+Params.SampleWeightSigma = 2;
 
 const ParamsWindowRect = [1200,20,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
@@ -57,7 +66,12 @@ ParamsWindow.AddParam('HeightMapStepBack',0,1);
 ParamsWindow.AddParam('LocalScale',0,1.0);
 ParamsWindow.AddParam('WorldScale',0,2.0);
 ParamsWindow.AddParam('DebugParticles');
+ParamsWindow.AddParam('DebugSdf');
 ParamsWindow.AddParam('BackgroundColour','Colour');
+ParamsWindow.AddParam('SdfMin',0,1);
+ParamsWindow.AddParam('SampleDelta',0,1);
+ParamsWindow.AddParam('SampleWeightSigma',0,5,Math.floor);
+
 
 
 
@@ -161,6 +175,37 @@ function CreateLogoParticleGeo(RenderTarget)
 }
 
 
+function CreateQuadGeometry(RenderTarget)
+{
+	let VertexData = [];
+	
+	let AddTriangle = function(a,b,c)
+	{
+		VertexData.push( ...a );
+		VertexData.push( ...b );
+		VertexData.push( ...c );
+	}
+	
+	const tln = [0,0];
+	const trn = [1,0];
+	const brn = [1,1];
+	const bln = [0,1];
+	
+	AddTriangle( tln, trn, brn );
+	AddTriangle( brn, bln, tln );
+	
+	const Attributes = {};
+	
+	const UvAttrib = {};
+	UvAttrib.Size = 2;
+	UvAttrib.Data = VertexData;
+	Attributes['TexCoord'] = UvAttrib;
+	
+	const TriangleBuffer = new Pop.Opengl.TriangleBuffer( RenderTarget, Attributes );
+	return TriangleBuffer;
+}
+
+
 function CreateLogoParticlePositionTexture(RenderTarget)
 {
 	const Positions = [];
@@ -197,18 +242,22 @@ function CreateLogoParticlePositionTexture(RenderTarget)
 
 AssetFetchFunctions['LogoParticleGeo'] = CreateLogoParticleGeo;
 AssetFetchFunctions['LogoParticlePositions'] = CreateLogoParticlePositionTexture;
+AssetFetchFunctions['Quad'] = CreateQuadGeometry;
 
-function Render(RenderTarget)
+const LogoSdf = new Pop.Image( [2048,2048], 'Float4' );
+
+function RenderSdf(RenderTarget)
 {
-	RenderTarget.ClearColour( 1,1,0 );
+	RenderTarget.ClearColour( 0,0,0 );
 	
 	const Shader = GetAsset(LogoParticleShader,RenderTarget);
 	const WorldPositions = GetAsset('LogoParticlePositions',RenderTarget);
 	const Geo = GetAsset('LogoParticleGeo',RenderTarget);
 	const LocalPositions = [	-1,-1,0,	1,-1,0,	0,1,0	];
-	const RenderTargetRect = RenderTarget.GetScreenRect();
-	const AspectRatio = RenderTargetRect[3] / RenderTargetRect[2];
-	
+	const RenderTargetRect = RenderTarget.GetRenderTargetRect();
+	//const AspectRatio = RenderTargetRect[3] / RenderTargetRect[2];
+	const AspectRatio = 1/3;	//	<-- model -> uv
+
 	const SetUniforms = function(Shader)
 	{
 		Shader.SetUniform('LocalPositions',LocalPositions);
@@ -223,13 +272,44 @@ function Render(RenderTarget)
 		}
 		Object.keys(Params).forEach(SetUniform);
 	}
-
-
-	RenderTarget.ClearColour( ...Params.BackgroundColour );
+	
 	if ( Params.DebugParticles )
 		RenderTarget.SetBlendModeBlit();
 	else
 		RenderTarget.SetBlendModeMax();
+	RenderTarget.DrawGeometry( Geo, Shader, SetUniforms );
+}
+
+function Render(RenderTarget)
+{
+	RenderTarget.ClearColour( 1,1,0 );
+	
+	//	update sdf
+	RenderTarget.RenderToRenderTarget( LogoSdf, RenderSdf );
+	
+	//	turn sdf into image
+	RenderTarget.ClearColour( 0,1,0 );
+
+	const Shader = GetAsset( Params.DebugSdf ? BlitTextureShader : LogoSdfShader, RenderTarget);
+	const Geo = GetAsset('Quad',RenderTarget);
+	const RenderTargetRect = RenderTarget.GetRenderTargetRect();
+	const AspectRatio = RenderTargetRect[3] / RenderTargetRect[2];
+	
+	const SetUniforms = function(Shader)
+	{
+		Shader.SetUniform('Texture',LogoSdf);
+		Shader.SetUniform('ProjectionAspectRatio',AspectRatio);
+		
+		function SetUniform(Key)
+		{
+			Shader.SetUniform( Key, Params[Key] );
+		}
+		Object.keys(Params).forEach(SetUniform);
+	}
+
+	RenderTarget.SetBlendModeBlit();
+	RenderTarget.ClearColour( ...Params.BackgroundColour );
+
 	RenderTarget.DrawGeometry( Geo, Shader, SetUniforms );
 
 }
