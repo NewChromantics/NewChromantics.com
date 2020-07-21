@@ -6,6 +6,8 @@ uniform float SdfMin;
 uniform float SampleDelta;
 uniform float ProjectionAspectRatio;
 uniform int SampleWeightSigma;
+uniform bool DebugSdfSample;
+uniform float AntiAlias;
 
 //	when we render the sdf, it's upside down
 //	I think the viewport is upside down in RenderToTexture()
@@ -140,9 +142,11 @@ float3 NormalToRedGreen(float Normal)
 
 void main()
 {
+	//	Sample = distance
 	float Sample = GetSample( uv );
 
-	if ( Sample >= SdfMin )
+
+	if ( DebugSdfSample )
 	{
 		float Scale = Range( SdfMin, 1.0, Sample );
 		gl_FragColor.w = 1.0;
@@ -150,13 +154,10 @@ void main()
 		return;
 	}
 
-	//Sample = opSmoothUnion( Sample, Sample, SdfMin );
-/*
-	if ( Sample < SdfMin )
-		Sample = 0.0;
-	else
-		Sample = 1.0;
-	*/
-	gl_FragColor = float4( 0,0,0,1 );
+	//	antialias
+	float Alpha = smoothstep( SdfMin-AntiAlias, SdfMin+AntiAlias, Sample );
+	Sample = mix( 0.0, 1.0, Alpha );
+
+	gl_FragColor = float4(Sample,Sample,Sample,1);
 }
 

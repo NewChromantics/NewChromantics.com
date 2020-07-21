@@ -52,7 +52,7 @@ float GetTriangleLocalScale(int TriangleIndex)
 	
 	//Radius *= 100.0;
 
-	Radius *= LocalScale;
+	Radius *= LocalScale * WorldScale;
 	return Radius;
 }
 

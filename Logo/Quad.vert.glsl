@@ -2,7 +2,6 @@ const vec4 VertexRect = vec4(0,0,1,1);
 in vec2 TexCoord;
 out vec2 uv;
 
-
 void main()
 {
 	gl_Position = vec4(TexCoord.x,TexCoord.y,0,1);

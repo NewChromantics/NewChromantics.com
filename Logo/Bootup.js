@@ -34,32 +34,36 @@ function OnParamsChanged()
 }
 Params.LocalScale = 10.0;
 Params.WorldScale = 1;
-Params.ParticleCount = 2000;
+Params.ParticleCount = 1000;
 Params.DebugParticles = false;
 Params.DebugSdf = false;
 Params.BackgroundColour = [0,0,0];
 Params.SdfMin = 0.3;
 Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 2;
+Params.DebugSdfSample = false;
+Params.AntiAlias = 0.05;
 
 const ParamsWindowRect = [0,0,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
+ParamsWindow.AddParam('AntiAlias',0,0.1);
 ParamsWindow.AddParam('LocalScale',0,50.0);
 ParamsWindow.AddParam('WorldScale',0,20.0);
 ParamsWindow.AddParam('DebugParticles');
 ParamsWindow.AddParam('DebugSdf');
+ParamsWindow.AddParam('DebugSdfSample');
 ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('SdfMin',0,1);
 ParamsWindow.AddParam('SampleDelta',0,1);
 ParamsWindow.AddParam('SampleWeightSigma',0,5,Math.floor);
 
 
-let RenderTimelineWindow = null;
-//if ( Pop.GetExeArguments().RenderStats )
-{
-	const Rect = [0,0,100,100];
-	RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
-}
+const Rect = [400,800,100,100];
+const RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
+
+const LogoSdf = new Pop.Image( [256,256], 'Float4' );
+const SdfWindow = new Pop.Gui.Window('Sdf',[0,300,500,500]);
+const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
 
 
 AssetFetchFunctions['LogoParticleGeo'] = CreateLogoParticleGeo;
@@ -254,10 +258,6 @@ function CreateLogoParticlePositionTexture(RenderTarget)
 	return Image;
 }
 
-
-const LogoSdf = new Pop.Image( [1024,1024], 'Float4' );
-const SdfWindow = new Pop.Gui.Window('Sdf',[0,300,500,500]);
-const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
 
 
 function RenderSdf(RenderTarget,AspectRect)
