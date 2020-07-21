@@ -7,6 +7,11 @@ uniform float SampleDelta;
 uniform float ProjectionAspectRatio;
 uniform int SampleWeightSigma;
 
+//	when we render the sdf, it's upside down
+//	I think the viewport is upside down in RenderToTexture()
+//	but pixels->CPU look correct
+const bool FlipSample = true;
+
 float opSmoothUnion( float d1, float d2, float k ) {
 	float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
 	return mix( d2, d1, h ) - k*h*(1.0-h);
@@ -79,6 +84,9 @@ void GetKernelWeights_Average(out float Weights[5*5])
 
 float GetSample(float2 uv)
 {
+	if ( FlipSample )
+		uv.y = 1.0 - uv.y;
+	
 	//	multi sample
 	float2 Delta = float2( SampleDelta, SampleDelta / ProjectionAspectRatio );
 	

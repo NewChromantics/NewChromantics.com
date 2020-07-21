@@ -17,12 +17,13 @@ const LogoParticleShader = RegisterShaderAssetFilename('Logo/LogoParticle.frag.g
 const LogoSdfShader = RegisterShaderAssetFilename('Logo/LogoSdf.frag.glsl','Logo/Quad.vert.glsl');
 const BlitTextureShader = RegisterShaderAssetFilename('Logo/Blit.frag.glsl','Logo/Quad.vert.glsl');
 
-Pop.AsyncCacheAssetAsString('Logo/LogoParticle.frag.glsl');
-Pop.AsyncCacheAssetAsString('Logo/LogoParticle.vert.glsl');
-Pop.AsyncCacheAssetAsString('Logo/Logo.svg.json');
-Pop.AsyncCacheAssetAsString('Logo/LogoSdf.frag.glsl');
-Pop.AsyncCacheAssetAsString('Logo/Blit.frag.glsl');
-Pop.AsyncCacheAssetAsString('Logo/Quad.vert.glsl');
+//	kick off loading
+Pop.LoadFileAsStringAsync('Logo/LogoParticle.frag.glsl');
+Pop.LoadFileAsStringAsync('Logo/LogoParticle.vert.glsl');
+Pop.LoadFileAsStringAsync('Logo/Logo.svg');
+Pop.LoadFileAsStringAsync('Logo/LogoSdf.frag.glsl');
+Pop.LoadFileAsStringAsync('Logo/Blit.frag.glsl');
+Pop.LoadFileAsStringAsync('Logo/Quad.vert.glsl');
 
 
 
@@ -31,19 +32,9 @@ function OnParamsChanged()
 {
 	
 }
-Params.SquareStep = true;
-Params.DrawColour = true;
-Params.DrawHeight = true;
-Params.BigImage = false;
-Params.DrawStepHeat = false;
-Params.TerrainHeightScalar = 5.70;
-Params.PositionToHeightmapScale = 0.009;
-Params.Fov = 52;
-Params.BrightnessMult = 1.8;
-Params.HeightMapStepBack = 0.30;
-Params.LocalScale = 0.12;
-Params.WorldScale = 1.00;
-Params.ParticleCount = 5000;
+Params.LocalScale = 10.0;
+Params.WorldScale = 1;
+Params.ParticleCount = 2000;
 Params.DebugParticles = false;
 Params.DebugSdf = false;
 Params.BackgroundColour = [0,0,0];
@@ -51,20 +42,10 @@ Params.SdfMin = 0.3;
 Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 2;
 
-const ParamsWindowRect = [1200,20,350,200];
+const ParamsWindowRect = [0,0,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
-ParamsWindow.AddParam('SquareStep');
-ParamsWindow.AddParam('DrawColour');
-ParamsWindow.AddParam('DrawHeight');
-ParamsWindow.AddParam('DrawStepHeat');
-ParamsWindow.AddParam('BigImage');
-ParamsWindow.AddParam('TerrainHeightScalar',0.001,5);
-ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
-ParamsWindow.AddParam('Fov',10,90);
-ParamsWindow.AddParam('BrightnessMult',0,3);
-ParamsWindow.AddParam('HeightMapStepBack',0,1);
-ParamsWindow.AddParam('LocalScale',0,1.0);
-ParamsWindow.AddParam('WorldScale',0,2.0);
+ParamsWindow.AddParam('LocalScale',0,50.0);
+ParamsWindow.AddParam('WorldScale',0,20.0);
 ParamsWindow.AddParam('DebugParticles');
 ParamsWindow.AddParam('DebugSdf');
 ParamsWindow.AddParam('BackgroundColour','Colour');
@@ -73,6 +54,17 @@ ParamsWindow.AddParam('SampleDelta',0,1);
 ParamsWindow.AddParam('SampleWeightSigma',0,5,Math.floor);
 
 
+let RenderTimelineWindow = null;
+//if ( Pop.GetExeArguments().RenderStats )
+{
+	const Rect = [0,0,100,100];
+	RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
+}
+
+
+AssetFetchFunctions['LogoParticleGeo'] = CreateLogoParticleGeo;
+AssetFetchFunctions['LogoParticlePositions'] = CreateLogoParticlePositionTexture;
+AssetFetchFunctions['Quad'] = CreateQuadGeometry;
 
 
 
@@ -209,14 +201,37 @@ function CreateQuadGeometry(RenderTarget)
 function CreateLogoParticlePositionTexture(RenderTarget)
 {
 	const Positions = [];
-	function PushVertex(x,y,z,Radius)
+	let Bounds = null;
+	let Min = null;
+	let Max = null;
+	function OnShape(Shape)
 	{
-		Positions.push( [x,y,Radius] );
+		if ( !Shape.Circle )
+		{
+			Pop.Warning(`Expected circle shape; ${JSON.stringify(Shape)} skipping`);
+			return;
+		}
+		Positions.push( [Shape.Circle.x,Shape.Circle.y,Shape.Circle.Radius] );
+	}
+
+	function FixPosition(xy,SvgBounds)
+	{
+		Bounds = SvgBounds;
+		if ( Min === null )	Min = xy.slice();
+		if ( Max === null )	Max = xy.slice();
+		Min[0] = Math.min(xy[0],Min[0]);
+		Min[1] = Math.min(xy[1],Min[1]);
+		Max[0] = Math.max(xy[0],Max[0]);
+		Max[1] = Math.max(xy[1],Max[1]);
+		return xy;
 	}
 	
-	const GeoFilename = 'Logo/Logo.svg.json';
-	const GeoContents = Pop.LoadFileAsString( GeoFilename );
-	Pop.Svg.Parse( GeoContents, PushVertex );
+	const SvgFilename = 'Logo/Logo.svg';
+	const SvgContents = Pop.LoadFileAsString( SvgFilename );
+	Pop.Svg.ParseShapes(SvgContents,OnShape,FixPosition);
+
+	//Params.WorldScale = Bounds[2] / Bounds[3];
+	ParamsWindow.OnParamChanged('WorldScale');
 	Params.ParticleCount = Positions.length;
 
 	//	turn points into image
@@ -240,13 +255,12 @@ function CreateLogoParticlePositionTexture(RenderTarget)
 }
 
 
-AssetFetchFunctions['LogoParticleGeo'] = CreateLogoParticleGeo;
-AssetFetchFunctions['LogoParticlePositions'] = CreateLogoParticlePositionTexture;
-AssetFetchFunctions['Quad'] = CreateQuadGeometry;
+const LogoSdf = new Pop.Image( [1024,1024], 'Float4' );
+const SdfWindow = new Pop.Gui.Window('Sdf',[0,300,500,500]);
+const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
 
-const LogoSdf = new Pop.Image( [2048,2048], 'Float4' );
 
-function RenderSdf(RenderTarget)
+function RenderSdf(RenderTarget,AspectRect)
 {
 	RenderTarget.ClearColour( 0,0,0 );
 	
@@ -255,8 +269,7 @@ function RenderSdf(RenderTarget)
 	const Geo = GetAsset('LogoParticleGeo',RenderTarget);
 	const LocalPositions = [	-1,-1,0,	1,-1,0,	0,1,0	];
 	const RenderTargetRect = RenderTarget.GetRenderTargetRect();
-	//const AspectRatio = RenderTargetRect[3] / RenderTargetRect[2];
-	const AspectRatio = 1/3;	//	<-- model -> uv
+	const AspectRatio = AspectRect[3] / AspectRect[2];
 
 	const SetUniforms = function(Shader)
 	{
@@ -273,19 +286,28 @@ function RenderSdf(RenderTarget)
 		Object.keys(Params).forEach(SetUniform);
 	}
 	
+	RenderTarget.SetBlendModeMax();
 	if ( Params.DebugParticles )
 		RenderTarget.SetBlendModeBlit();
-	else
-		RenderTarget.SetBlendModeMax();
 	RenderTarget.DrawGeometry( Geo, Shader, SetUniforms );
 }
+
 
 function Render(RenderTarget)
 {
 	RenderTarget.ClearColour( 1,1,0 );
 	
+	const ScreenRect = RenderTarget.GetScreenRect();
+	function CallRenderSdf(RenderTarget)
+	{
+		RenderSdf( RenderTarget, ScreenRect );
+	}
+	
 	//	update sdf
-	RenderTarget.RenderToRenderTarget( LogoSdf, RenderSdf );
+	const ReadBack = true;
+	RenderTarget.RenderToRenderTarget( LogoSdf, CallRenderSdf, ReadBack );
+	if ( !SdfWindow.IsMinimised() )
+		SdfPreview.SetImage(LogoSdf);
 	
 	//	turn sdf into image
 	RenderTarget.ClearColour( 0,1,0 );

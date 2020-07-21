@@ -66,11 +66,14 @@ void main()
 	float3 LocalPos = VertexPos;
 	
 	float3 WorldPos = GetTriangleWorldPos(TriangleIndex) * WorldScale;
+	
 	WorldPos += LocalPos;
 	
 	float4 ProjectionPos = float4( WorldPos.x * ProjectionAspectRatio, WorldPos.y, 0, 1 );
 	gl_Position = ProjectionPos;
-	
+	//	gr: move 0..1 to viewport space
+	gl_Position.xy = mix( float2(-1,-1), float2(1,1), gl_Position.xy );
+
 	TriangleUv = LocalPositions[VertexIndex].xy;
 }
 
