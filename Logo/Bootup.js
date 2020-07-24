@@ -16,6 +16,8 @@ SetGlobal.call(this);
 const LogoParticleShader = RegisterShaderAssetFilename('Logo/LogoParticle.frag.glsl','Logo/LogoParticle.vert.glsl');
 const PositionsToSdfShader = RegisterShaderAssetFilename('Logo/LogoSdf.frag.glsl','Logo/Quad.vert.glsl');
 const BlitTextureShader = RegisterShaderAssetFilename('Logo/Blit.frag.glsl','Logo/Quad.vert.glsl');
+const UpdatePositionsShader = RegisterShaderAssetFilename('Logo/Logo_PhysicsIteration_UpdatePosition.frag.glsl','Logo/Quad.vert.glsl');
+const UpdateVelocitysShader = RegisterShaderAssetFilename('Logo/Logo_PhysicsIteration_UpdateVelocity.frag.glsl','Logo/Quad.vert.glsl');
 
 //	kick off loading
 Pop.LoadFileAsStringAsync('Logo/LogoParticle.frag.glsl');
@@ -24,7 +26,9 @@ Pop.LoadFileAsStringAsync('Logo/Logo.svg');
 Pop.LoadFileAsStringAsync('Logo/LogoSdf.frag.glsl');
 Pop.LoadFileAsStringAsync('Logo/Blit.frag.glsl');
 Pop.LoadFileAsStringAsync('Logo/Quad.vert.glsl');
-
+Pop.LoadFileAsImageAsync('Logo/Noise.png');
+Pop.LoadFileAsStringAsync('Logo/Logo_PhysicsIteration_UpdatePosition.frag.glsl');
+Pop.LoadFileAsStringAsync('Logo/Logo_PhysicsIteration_UpdateVelocity.frag.glsl');
 
 
 var Params = {};
@@ -32,7 +36,7 @@ function OnParamsChanged()
 {
 	
 }
-Params.LocalScale = 10.0;
+Params.LocalScale = 15.0;
 Params.WorldScale = 1;
 Params.ParticleCount = 9000;
 Params.DebugParticles = false;
@@ -43,6 +47,14 @@ Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 3;
 Params.DebugSdfSample = false;
 Params.AntiAlias = 0.05;
+Params.SpringForce = 5.0;
+Params.GravityForce = 0.3;
+Params.Damping = 0.22;
+Params.NoiseForce = 0.35;
+Params.PushRadius = 0.15;
+Params.PushForce = 20.00;
+Params.PushForceMax = 40.00;
+
 
 const ParamsWindowRect = [400,600,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
@@ -56,6 +68,13 @@ ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('SdfMin',0,1);
 ParamsWindow.AddParam('SampleDelta',0,1);
 ParamsWindow.AddParam('SampleWeightSigma',0,5,Math.floor);
+ParamsWindow.AddParam('SpringForce',0,10);
+ParamsWindow.AddParam('GravityForce',-10,10);
+ParamsWindow.AddParam('Damping',0,1);
+ParamsWindow.AddParam('NoiseForce',0,10);
+ParamsWindow.AddParam('PushForce',0,50);
+ParamsWindow.AddParam('PushForceMax',0,50);
+ParamsWindow.AddParam('PushRadius',0,0.5);
 
 
 const Rect = [500,500,100,100];
@@ -82,6 +101,7 @@ class PhysicsTexturesManager
 	constructor(OriginalPositions,EnableDebugWindow)
 	{
 		//	back buffer flipper
+		//	a=true means A = current
 		this.BufferA = true;
 		
 		//	copy originals
@@ -92,19 +112,37 @@ class PhysicsTexturesManager
 		this.VelocitysA = this.CreateVelocityTexture(OriginalPositions);
 		this.VelocitysB = this.CreateVelocityTexture(OriginalPositions);
 		
+		this.Time = 0;
+		this.OriginalPositions = OriginalPositions;
+		this.PushPositions = [];
+		
 		if ( EnableDebugWindow )
 		{
-			this.DebugWindow = new Pop.Gui.Window('PhysicsTextures',[0,0,400,400]);
-			this.DebugPositionsA = new Pop.Gui.ImageMap(this.DebugWindow,[0,0,'50%','50%']);
-			this.DebugPositionsB = new Pop.Gui.ImageMap(this.DebugWindow,['50%',0,'50%','50%']);
-			this.DebugVelocitysA = new Pop.Gui.ImageMap(this.DebugWindow,[0,'50%','50%','50%']);
-			this.DebugVelocitysB = new Pop.Gui.ImageMap(this.DebugWindow,['50%','50%','50%','50%']);
-		
-			this.DebugPositionsA.SetImage(this.PositionsA);
-			this.DebugPositionsB.SetImage(this.PositionsB);
-			this.DebugVelocitysA.SetImage(this.VelocitysA);
-			this.DebugVelocitysB.SetImage(this.VelocitysB);
+			try
+			{
+				this.DebugWindow = new Pop.Gui.Window('PhysicsTextures',[0,0,400,400]);
+				this.DebugPositionsA = new Pop.Gui.ImageMap(this.DebugWindow,[0,0,'50%','50%']);
+				this.DebugPositionsB = new Pop.Gui.ImageMap(this.DebugWindow,['50%',0,'50%','50%']);
+				this.DebugVelocitysA = new Pop.Gui.ImageMap(this.DebugWindow,[0,'50%','50%','50%']);
+				this.DebugVelocitysB = new Pop.Gui.ImageMap(this.DebugWindow,['50%','50%','50%','50%']);
+			
+				this.DebugPositionsA.SetImage(this.PositionsA);
+				this.DebugPositionsB.SetImage(this.PositionsB);
+				this.DebugVelocitysA.SetImage(this.VelocitysA);
+				this.DebugVelocitysB.SetImage(this.VelocitysB);
+			}
+			catch(e)
+			{
+				Pop.Warning(e);
+			}
 		}
+	}
+	
+	OnMouseMove(u,v)
+	{
+		const PushPositionCount = 4;
+		this.PushPositions.push( [u,v] );
+		this.PushPositions = this.PushPositions.slice(-PushPositionCount);
 	}
 	
 	CreateVelocityTexture(OriginalPositions)
@@ -137,24 +175,94 @@ class PhysicsTexturesManager
 	
 	Iteration(RenderContext)
 	{
+		const OldVel = this.BufferA ? this.VelocitysA : this.VelocitysB;
+		const NewVel = this.BufferA ? this.VelocitysB : this.VelocitysA;
+		const OldPos = this.BufferA ? this.PositionsA : this.PositionsB;
+		const NewPos = this.BufferA ? this.PositionsB : this.PositionsA;
+
+		const TimeStep = 1/60;
+		this.Time += TimeStep;
+		
 		//	update velocities from current buffer to back buffer
+		this.UpdateVelocitys( RenderContext, OldVel, NewVel, OldPos, this.OriginalPositions, TimeStep, this.Time );
+
 		//	update positions from current buffer to back buffer
+		this.UpdatePositions( RenderContext, OldPos, NewPos, NewVel, TimeStep, this.Time );
+
 		//	move back buffer to front
 		this.BufferA = !this.BufferA;
+	}
+	
+	UpdateVelocitys(RenderContext,OldVelocitys,NewVelocitys,Positions,OriginalPositions,TimeStep,Time)
+	{
+		const PushPositions = this.PushPositions;
+		
+		function Render(RenderTarget)
+		{
+			const RenderContext = RenderTarget;
+			const Shader = GetAsset(UpdateVelocitysShader,RenderContext);
+			const Geo = GetAsset('Quad',RenderContext);
+			const Noise = Pop.LoadFileAsImage('Logo/Noise.png');
+			
+			function SetUniforms(Shader)
+			{
+				Shader.SetUniform('LastVelocitys',OldVelocitys);
+				Shader.SetUniform('OrigPositions',OriginalPositions);
+				Shader.SetUniform('LastPositions',Positions);
+				Shader.SetUniform('Noise',Noise);
+				Shader.SetUniform('PhysicsStep',TimeStep);
+				Shader.SetUniform('Time', Time);
+				Shader.SetUniform('PushPositions', PushPositions );
+				
+				for ( let [Key,Value] of Object.entries(Params) )
+				{
+					Shader.SetUniform(Key,Value);
+				}
+			}
+			RenderTarget.ClearColour( 0,0,0 );
+			RenderTarget.SetBlendModeBlit();
+			RenderTarget.DrawGeometry( Geo, Shader, SetUniforms );
+		}
+		RenderContext.RenderToRenderTarget( NewVelocitys, Render );
+	}
+	
+	UpdatePositions(RenderContext,OldPositions,NewPositions,NewVelocitys,TimeStep,Time)
+	{
+		function Render(RenderTarget)
+		{
+			const RenderContext = RenderTarget;
+			const Shader = GetAsset(UpdatePositionsShader,RenderContext);
+			const Geo = GetAsset('Quad',RenderContext);
+			
+			function SetUniforms(Shader)
+			{
+				Shader.SetUniform('LastPositions',OldPositions);
+				Shader.SetUniform('Velocitys',NewVelocitys);
+				Shader.SetUniform('PhysicsStep',TimeStep);
+				Shader.SetUniform('Time',Time);
+			}
+			RenderTarget.ClearColour( 0,0,0 );
+			RenderTarget.SetBlendModeBlit();
+			RenderTarget.DrawGeometry( Geo, Shader, SetUniforms );
+		}
+		RenderContext.RenderToRenderTarget( NewPositions, Render );
 	}
 }
 
 
 function GetPositionsTexture(RenderContext)
 {
-	const WorldPositions = GetAsset('LogoParticlePositions',RenderContext);
-	return WorldPositions;
+	//const EnableDebugWindow = Pop.GetExeArguments().ShowPhysicsTextures;
+	const EnableDebugWindow = true;
+
+	//const WorldPositions = GetAsset('LogoParticlePositions',RenderContext);
+	//return WorldPositions;
 	
 	//	init textures
 	if ( !PhysicsTextures )
 	{
 		const OriginalPositions = GetAsset('LogoParticlePositions',RenderContext);
-		PhysicsTextures = new PhysicsTexturesManager(OriginalPositions);
+		PhysicsTextures = new PhysicsTexturesManager(OriginalPositions,EnableDebugWindow);
 		
 		//	do first iteration so things are initialised
 		PhysicsTextures.Iteration(RenderContext);
@@ -232,7 +340,7 @@ function GetLogoPositions(SvgFilename)
 	function ResizeXyr(xyr)
 	{
 		//	gr: argh, but this seems correct
-		const Scale = 1 - (Bounds[3] / Bounds[2] / 2);
+		const Scale = 1;//1 - (Bounds[3] / Bounds[2] / 2);
 		xyr[0] *= Scale;
 		xyr[1] *= Scale;
 		xyr[2] *= Scale;
@@ -353,7 +461,7 @@ function RenderSdf(RenderTarget,AspectRect)
 	
 	const Shader = GetAsset(LogoParticleShader,RenderContext);
 	const WorldPositions = GetPositionsTexture(RenderContext);
-	const Geo = GetAsset('LogoParticleGeo',RenderTarget);
+	const Geo = GetAsset('LogoParticleGeo',RenderContext);
 	const LocalPositions = [	-1,-1,0,	1,-1,0,	0,1,0	];
 	const RenderTargetRect = RenderTarget.GetRenderTargetRect();
 	const AspectRatio = AspectRect[3] / AspectRect[2];
@@ -444,6 +552,16 @@ Window.OnRender = function(RenderTarget)
 	catch(e)
 	{
 		console.warn(e);
+	}
+}
+Window.OnMouseMove = function(x,y)
+{
+	if ( PhysicsTextures )
+	{
+		const Rect = Window.GetScreenRect();
+		const u = x / Rect[2];
+		const v = y / Rect[3];
+		PhysicsTextures.OnMouseMove(u,v);
 	}
 }
 

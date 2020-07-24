@@ -148,6 +148,7 @@ float3 GetPushPos(float2 Position)
 	return float3( Position, 0 );
 }
 
+//	gr: major performance hit
 float3 GetPushForce(float2 uv)
 {
 	vec3 LastPos = texture2D( LastPositions, uv ).xyz;
