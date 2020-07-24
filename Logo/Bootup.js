@@ -32,33 +32,47 @@ Pop.LoadFileAsStringAsync('Logo/Logo_PhysicsIteration_UpdateVelocity.frag.glsl')
 
 
 var Params = {};
-function OnParamsChanged()
+function OnParamsChanged(Params,ParamChanged)
 {
-	
+	switch(ParamChanged)
+	{
+		case 'ParticleDuplicate':
+		case 'DuplicateOffsetScale':
+			//	remake particles
+			InvalidateParticlesAsset();
+			break;
+	}
 }
-Params.LocalScale = 15.0;
+
+
+Params.LocalScale = 8.0;
 Params.WorldScale = 1;
-Params.ParticleCount = 9000;
+Params.ParticleCount = 1000;
 Params.DebugParticles = false;
 Params.DebugSdf = false;
 Params.BackgroundColour = [0,0,0];
-Params.SdfMin = 0.62;
+Params.SdfMin = 0.48;
 Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 3;
 Params.DebugSdfSample = false;
 Params.AntiAlias = 0.05;
-Params.SpringForce = 5.0;
-Params.GravityForce = 0.3;
+Params.SpringForce = 0.8;
+Params.GravityForce = 0.02;
 Params.Damping = 0.22;
 Params.NoiseForce = 0.35;
 Params.PushRadius = 0.15;
 Params.PushForce = 20.00;
 Params.PushForceMax = 40.00;
+Params.ParticleDuplicate = 1;
+Params.DuplicateOffsetScale = 0.1;
+Params.ParticleVertexScale = 0.65;	//	vertex scale to reduce overdraw
 
+Object.assign( Params, Pop.GetExeArguments() );
 
 const ParamsWindowRect = [400,600,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
 ParamsWindow.AddParam('AntiAlias',0,0.1);
+ParamsWindow.AddParam('ParticleVertexScale',0.001,1.5);
 ParamsWindow.AddParam('LocalScale',0,50.0);
 ParamsWindow.AddParam('WorldScale',0,20.0);
 ParamsWindow.AddParam('DebugParticles');
@@ -75,16 +89,17 @@ ParamsWindow.AddParam('NoiseForce',0,10);
 ParamsWindow.AddParam('PushForce',0,50);
 ParamsWindow.AddParam('PushForceMax',0,50);
 ParamsWindow.AddParam('PushRadius',0,0.5);
-
+ParamsWindow.AddParam('DuplicateOffsetScale',0,1);
 
 const Rect = [500,500,100,100];
 const RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
 
 const SdfWindow = new Pop.Gui.Window('Sdf',[0,300,300,300]);
 const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
+SdfWindow.SetMinimised();
 
 //	texture we draw SD positions to
-const PositionsSdf = new Pop.Image( [256,256], 'Float4' );
+const PositionsSdf = new Pop.Image( [2048,2048], 'Float4' );
 
 let PhysicsTextures = null;	//PhysicsTexturesManager
 
@@ -93,6 +108,13 @@ AssetFetchFunctions['LogoParticlePositions'] = CreateLogoParticlePositionTexture
 AssetFetchFunctions['Quad'] = CreateQuadGeometry;
 
 
+
+function InvalidateParticlesAsset()
+{
+	PhysicsTextures = null;
+	InvalidateAsset('LogoParticleGeo');
+	InvalidateAsset('LogoParticlePositions');
+}
 
 
 //	current positions, double buffered
@@ -336,6 +358,21 @@ function GetLogoPositions(SvgFilename)
 	
 	Pop.Debug(`logo positions bounds ${Bounds}`);
 	
+	//	add more!
+	function MakeDuplicate(xyr)
+	{
+		const Texel = Params.DuplicateOffsetScale * 0.1;
+		xyr = xyr.slice();
+		xyr[0] += (Math.random()-0.5) * Texel;
+		xyr[1] += (Math.random()-0.5) * Texel;
+		return xyr;
+	}
+	for ( let i=0;	i<=Params.ParticleDuplicate;	i++ )
+	{
+		const NewPositions = Positions.map( MakeDuplicate );
+		Positions.push( ...NewPositions );
+	}
+	
 	//	correct positions as image is wider than high
 	function ResizeXyr(xyr)
 	{
@@ -370,8 +407,8 @@ function CreateLogoParticlePositionTexture(RenderTarget)
 {
 	const Positions = GetLogoPositions('Logo/Logo.svg');
 	
-	ParamsWindow.OnParamChanged('WorldScale');
 	Params.ParticleCount = Positions.length;
+	//ParamsWindow.OnParamChanged('ParticleCount');
 	
 	//	turn points into image
 	const Width = 1024;

@@ -10,7 +10,9 @@ void main()
 	//uv *= 2.0;
 	float Distance = length(uv);
 	if ( Distance > ClipRadius )
+	{
 		discard;
+	}
 	Distance /= ClipRadius;
 	Distance = min( 1.0, Distance );
 	//Distance *= Distance;

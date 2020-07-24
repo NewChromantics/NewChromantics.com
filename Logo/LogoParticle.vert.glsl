@@ -7,6 +7,7 @@ uniform int WorldPositionsHeight;
 
 uniform float LocalScale;
 uniform float WorldScale;
+uniform float ParticleVertexScale;
 uniform float ProjectionAspectRatio;
 
 uniform vec3 LocalPositions[3];/* = vec3[3](
@@ -53,6 +54,8 @@ float GetTriangleLocalScale(int TriangleIndex)
 	//Radius *= 100.0;
 
 	Radius *= LocalScale * WorldScale;
+	//	reduce size for speed to reduce overdraw
+	Radius *= ParticleVertexScale;
 	return Radius;
 }
 

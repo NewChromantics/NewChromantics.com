@@ -168,11 +168,14 @@ float3 GetPushForce(float2 uv)
 		if ( length(Delta) <= 0.001 )
 			continue;
 		
+		//	gr: rotate delta based on noise
+		
 		Delta *= DistanceForce * PushForce;
 		float DeltaScale = length( Delta );
 		DeltaScale = min( DeltaScale, PushForceMax );
 		Force += normalize(Delta) * DeltaScale;
-		Force += normalize(Delta) * DistanceForce * GetNoiseForce01(uv);
+		//Force += normalize(Delta) * DistanceForce * GetNoiseForce01(uv);
+		Force += normalize(Delta) * DistanceForce * GetNoiseForce(uv);
 	}
 	return Force;
 }
