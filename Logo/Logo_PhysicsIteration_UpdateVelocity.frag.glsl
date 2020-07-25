@@ -17,6 +17,8 @@ uniform float PushRadius;
 uniform float PushForce;
 uniform float PushForceMax;
 
+uniform float VelocityAccumulatorScalar;
+
 /*
  float3 fade(float3 t)
  {	return t * t * t * (t * (t * 6 - 15) + 10);	}
@@ -184,17 +186,28 @@ void main()
 {
 	//	gr: just a blit should be stable
 	vec4 Vel = texture( LastVelocitys, uv );
+	float VelZ = Vel.z;
 	
+	Vel.z = 0.0;
+	float3 PushForce = GetPushForce(uv);
+
 	//Vel.xyz += GetNoiseForce(uv) * PhysicsStep;
 	Vel.xyz += GetGravityForce(uv) ;//* PhysicsStep;
 	Vel.xyz += GetSpringForce(uv) ;//* PhysicsStep;
-	Vel.xyz += GetPushForce(uv) ;//* PhysicsStep;
+	Vel.xyz += PushForce;//* PhysicsStep;
 
 	//	damping
 	Vel.xyz *= 1.0 - Damping;
 	
-	//Vel.xyz = float3(0,0,0);
-		
+	//	velocity z is an ever increasing number to accumulate velocity
+	//	but for lack of float support, modulus to 1
+	//float VelocityAdd = length(PushForce.xy) * VelocityAccumulatorScalar;
+	float VelocityAdd = length(Vel.xy) * VelocityAccumulatorScalar;
+	//Vel.z = fract( VelZ + VelocityAdd );
+	//Vel.z = fract( VelZ + VelocityAdd );
+	//Vel.z = mod( VelZ + VelocityAdd, 1.0 );
+	Vel.z = mod( VelZ + VelocityAdd, 1.0 );
+	
 	Vel.w = 1.0;
 	gl_FragColor = Vel;
 }

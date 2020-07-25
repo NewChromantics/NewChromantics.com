@@ -1,6 +1,6 @@
 precision highp float;
 
-uniform sampler2D Texture;
+uniform sampler2D SdfTexture;
 varying vec2 uv;
 uniform float SdfMin;
 uniform float SampleDelta;
@@ -8,11 +8,16 @@ uniform float ProjectionAspectRatio;
 uniform int SampleWeightSigma;
 uniform bool DebugSdfSample;
 uniform float AntiAlias;
+uniform float SdfVelocityMax;
+uniform float3 FinalColourA;
+uniform float3 FinalColourB;
+uniform bool UseAccumulatedVelocity;
 
 //	when we render the sdf, it's upside down
 //	I think the viewport is upside down in RenderToTexture()
 //	but pixels->CPU look correct
 const bool FlipSample = true;
+
 
 float opSmoothUnion( float d1, float d2, float k ) {
 	float h = clamp( 0.5 + 0.5*(d2-d1)/k, 0.0, 1.0 );
@@ -24,9 +29,20 @@ float GetOffsetSample(float2 uv,float2 Offset)
 {
 	uv += Offset;
 	//uv.y = 1.0 - uv.y;
-	float Sample = texture( Texture, uv ).z;
+	//	distance is w (used in the max blend)
+	//	but it seems its not propogating?
+	float Sample = texture( SdfTexture, uv ).x;
 	return Sample;
 }
+
+
+float2 GetSampleVelocity(float2 uv)
+{
+	uv.y = 1.0 - uv.y;
+	float4 Sample = texture2D( SdfTexture, uv );
+	return Sample.yz;
+}
+
 
 //	http://dev.theomader.com/gaussian-kernel-calculator/
 #define PushWeight(i,a)		Weights[i]=a;
@@ -140,24 +156,58 @@ float3 NormalToRedGreen(float Normal)
 	return float3( 0,0,1 );
 }
 
+//	https://www.shadertoy.com/view/XljGzV
+vec3 hsl2rgb( in vec3 c )
+{
+	vec3 rgb = clamp( abs(mod(c.x*6.0+vec3(0.0,4.0,2.0),6.0)-3.0)-1.0, 0.0, 1.0 );
+	
+	return c.z + c.y * (rgb-0.5)*(1.0-abs(2.0*c.z-1.0));
+}
+
 void main()
 {
 	//	Sample = distance
 	float Sample = GetSample( uv );
-
 
 	if ( DebugSdfSample )
 	{
 		float Scale = Range( SdfMin, 1.0, Sample );
 		gl_FragColor.w = 1.0;
 		gl_FragColor.xyz = NormalToRedGreen(Scale);
+
+		gl_FragColor = texture2D( SdfTexture, uv );
 		return;
 	}
 
+	float2 Velocity2 = GetSampleVelocity(uv);
+	
 	//	antialias
 	float Alpha = smoothstep( SdfMin-AntiAlias, SdfMin+AntiAlias, Sample );
 	Sample = mix( 0.0, 1.0, Alpha );
-
-	gl_FragColor = float4(Sample,Sample,Sample,1);
+	
+	
+	//	accumulated velocity should repeat from 0..1
+	//	turn it into 0..1..0
+	float Blend = UseAccumulatedVelocity ? Velocity2.x : Velocity2.y;
+	if ( Blend < 0.5 )
+		Blend = Range(0.0,0.5,Blend);
+	else
+		Blend = Range(1.0,0.5,Blend);
+	
+	
+	float3 Rgb = mix( FinalColourA, FinalColourB, Blend );
+	/*
+	//float3 Rgb = float3(1,1,1);
+	//float3 Rgb = mix( float3(0.5,0.5,0.5),float3(1,1,1),Velocity3);
+	//float3 Rgb = Velocity3;
+	float Hue = Velocity2.x;
+	float Lightness = mix( LightnessMin, LightnessMax, Velocity2.y );
+	float Saturation = mix( SaturationMin, SaturationMax, Velocity2.y );
+	float3 Rgb = hsl2rgb( float3(Hue,Saturation,Lightness) );
+	//float3 Rgb = NormalToRedGreen(Velocity2.x);
+	//Rgb.z = Velocity2.y;
+	*/
+	gl_FragColor.xyz = Rgb * float3(Sample,Sample,Sample);
+	gl_FragColor.w = 1.0;
 }
 

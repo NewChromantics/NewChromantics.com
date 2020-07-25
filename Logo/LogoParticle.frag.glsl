@@ -1,5 +1,6 @@
 precision highp float;
 varying vec2 TriangleUv;
+varying vec3 TriangleVelocity;
 
 const float ClipRadius = 0.4;
 
@@ -18,6 +19,9 @@ void main()
 	//Distance *= Distance;
 	Distance = 1.0 - Distance;
 	//gl_FragColor = float4(TriangleUv,0,1);
-	gl_FragColor = float4(uv,Distance,Distance);
+	//gl_FragColor = float4(uv,Distance,Distance);
+	
+	//	blend mode max is using alpha, so make sure w is distance
+	gl_FragColor = float4(Distance,TriangleVelocity.z,TriangleVelocity.x,Distance);
 }
 

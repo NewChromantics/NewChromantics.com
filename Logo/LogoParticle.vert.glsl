@@ -1,9 +1,11 @@
 attribute vec2 VertexIndexTriangleIndex;
 varying vec2 TriangleUv;
+varying float3 TriangleVelocity;
 
 uniform sampler2D WorldPositions;
 uniform int WorldPositionsWidth;
 uniform int WorldPositionsHeight;
+uniform sampler2D Velocitys;
 
 uniform float LocalScale;
 uniform float WorldScale;
@@ -31,11 +33,15 @@ vec2 GetTriangleUv(int TriangleIndex)
 	return uv;
 }
 
-vec3 GetTriangleWorldPos(int TriangleIndex)
+vec3 GetTriangleWorldPos(int TriangleIndex,out vec3 Velocity)
 {
 	float2 uv = GetTriangleUv( TriangleIndex );
 	float Lod = 0.0;
 	float2 xy = textureLod( WorldPositions, uv, Lod ).xy;
+	
+	//	gr: this sample kills perf
+	//Velocity = textureLod( Velocitys, uv, Lod ).xyz;
+	Velocity = float3(0,0,0);
 	return float3(xy,0);
 }
 
@@ -68,7 +74,8 @@ void main()
 	float3 VertexPos = LocalPositions[VertexIndex] * GetTriangleLocalScale(VertexIndex);
 	float3 LocalPos = VertexPos;
 	
-	float3 WorldPos = GetTriangleWorldPos(TriangleIndex) * WorldScale;
+	float3 Velocity3;
+	float3 WorldPos = GetTriangleWorldPos(TriangleIndex, Velocity3) * WorldScale;
 	
 	WorldPos += LocalPos;
 	
@@ -78,5 +85,6 @@ void main()
 	gl_Position.xy = mix( float2(-1,-1), float2(1,1), gl_Position.xy );
 
 	TriangleUv = LocalPositions[VertexIndex].xy;
+	TriangleVelocity = Velocity3;
 }
 

@@ -44,7 +44,9 @@ function OnParamsChanged(Params,ParamChanged)
 	}
 }
 
-
+Params.FinalColourA = [0,1,1];
+Params.FinalColourB = [1,0,1];
+Params.SdfVelocityMax = 1;
 Params.LocalScale = 8.0;
 Params.WorldScale = 1;
 Params.ParticleCount = 1000;
@@ -57,20 +59,28 @@ Params.SampleWeightSigma = 3;
 Params.DebugSdfSample = false;
 Params.AntiAlias = 0.05;
 Params.SpringForce = 0.8;
-Params.GravityForce = 0.02;
+Params.GravityForce = 0.0;
 Params.Damping = 0.22;
-Params.NoiseForce = 0.35;
+Params.NoiseForce = 0.0;
 Params.PushRadius = 0.15;
-Params.PushForce = 20.00;
-Params.PushForceMax = 40.00;
+Params.PushForce = 35.0;
+Params.PushForceMax = 40.0;
 Params.ParticleDuplicate = 1;
-Params.DuplicateOffsetScale = 0.1;
+Params.DuplicateOffsetScale = 0.04;
 Params.ParticleVertexScale = 0.65;	//	vertex scale to reduce overdraw
+Params.VelocityAccumulatorScalar = 0.1;
+Params.UseAccumulatedVelocity = true;
 
 Object.assign( Params, Pop.GetExeArguments() );
 
 const ParamsWindowRect = [400,600,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
+
+ParamsWindow.AddParam('FinalColourA','Colour');
+ParamsWindow.AddParam('FinalColourB','Colour');
+ParamsWindow.AddParam('UseAccumulatedVelocity');
+ParamsWindow.AddParam('VelocityAccumulatorScalar',0,1);
+ParamsWindow.AddParam('SdfVelocityMax',0,2);
 ParamsWindow.AddParam('AntiAlias',0,0.1);
 ParamsWindow.AddParam('ParticleVertexScale',0.001,1.5);
 ParamsWindow.AddParam('LocalScale',0,50.0);
@@ -90,6 +100,8 @@ ParamsWindow.AddParam('PushForce',0,50);
 ParamsWindow.AddParam('PushForceMax',0,50);
 ParamsWindow.AddParam('PushRadius',0,0.5);
 ParamsWindow.AddParam('DuplicateOffsetScale',0,1);
+ParamsWindow.AddParam('ParticleDuplicate',0,3,Math.floor);
+
 
 const Rect = [500,500,100,100];
 const RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
@@ -99,7 +111,8 @@ const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
 SdfWindow.SetMinimised();
 
 //	texture we draw SD positions to
-const PositionsSdf = new Pop.Image( [2048,2048], 'Float4' );
+const PositionsSdf = new Pop.Image( [1024,1024], 'RGBA' );
+PositionsSdf.SetLinearFilter(true);
 
 let PhysicsTextures = null;	//PhysicsTexturesManager
 
@@ -192,7 +205,7 @@ class PhysicsTexturesManager
 
 	GetVelocitys()
 	{
-		return this.BufferA ? this.PositionsA : this.PositionsB;
+		return this.BufferA ? this.VelocitysA : this.VelocitysB;
 	}
 	
 	Iteration(RenderContext)
@@ -498,6 +511,7 @@ function RenderSdf(RenderTarget,AspectRect)
 	
 	const Shader = GetAsset(LogoParticleShader,RenderContext);
 	const WorldPositions = GetPositionsTexture(RenderContext);
+	const Velocitys = GetVelocitysTexture(RenderContext);
 	const Geo = GetAsset('LogoParticleGeo',RenderContext);
 	const LocalPositions = [	-1,-1,0,	1,-1,0,	0,1,0	];
 	const RenderTargetRect = RenderTarget.GetRenderTargetRect();
@@ -507,6 +521,7 @@ function RenderSdf(RenderTarget,AspectRect)
 	{
 		Shader.SetUniform('LocalPositions',LocalPositions);
 		Shader.SetUniform('WorldPositions',WorldPositions);
+		Shader.SetUniform('Velocitys',Velocitys);
 		Shader.SetUniform('WorldPositionsWidth',WorldPositions.GetWidth());
 		Shader.SetUniform('WorldPositionsHeight',WorldPositions.GetHeight());
 		Shader.SetUniform('ProjectionAspectRatio',AspectRatio);
@@ -557,7 +572,7 @@ function Render(RenderTarget)
 	
 	const SetUniforms = function(Shader)
 	{
-		Shader.SetUniform('Texture',PositionsSdf);
+		Shader.SetUniform('SdfTexture',PositionsSdf);
 		Shader.SetUniform('ProjectionAspectRatio',AspectRatio);
 		
 		function SetUniform(Key)
