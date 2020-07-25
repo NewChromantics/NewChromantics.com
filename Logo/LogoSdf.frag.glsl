@@ -12,6 +12,7 @@ uniform float SdfVelocityMax;
 uniform float3 FinalColourA;
 uniform float3 FinalColourB;
 uniform bool UseAccumulatedVelocity;
+uniform float3 BackgroundColour;
 
 //	when we render the sdf, it's upside down
 //	I think the viewport is upside down in RenderToTexture()
@@ -207,7 +208,8 @@ void main()
 	//float3 Rgb = NormalToRedGreen(Velocity2.x);
 	//Rgb.z = Velocity2.y;
 	*/
-	gl_FragColor.xyz = Rgb * float3(Sample,Sample,Sample);
+	//gl_FragColor.xyz = Rgb * float3(Sample,Sample,Sample);
+	gl_FragColor.xyz = mix( BackgroundColour, Rgb, Sample );
 	gl_FragColor.w = 1.0;
 }
 

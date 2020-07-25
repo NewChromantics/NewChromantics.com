@@ -52,7 +52,7 @@ Params.WorldScale = 1;
 Params.ParticleCount = 1000;
 Params.DebugParticles = false;
 Params.DebugSdf = false;
-Params.BackgroundColour = [0,0,0];
+Params.BackgroundColour = [1,1,1];
 Params.SdfMin = 0.48;
 Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 3;
@@ -65,6 +65,7 @@ Params.NoiseForce = 0.0;
 Params.PushRadius = 0.15;
 Params.PushForce = 35.0;
 Params.PushForceMax = 40.0;
+Params.PushForceAgeMax = 4;
 Params.ParticleDuplicate = 1;
 Params.DuplicateOffsetScale = 0.04;
 Params.ParticleVertexScale = 0.65;	//	vertex scale to reduce overdraw
@@ -78,6 +79,7 @@ var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRec
 
 ParamsWindow.AddParam('FinalColourA','Colour');
 ParamsWindow.AddParam('FinalColourB','Colour');
+ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('UseAccumulatedVelocity');
 ParamsWindow.AddParam('VelocityAccumulatorScalar',0,1);
 ParamsWindow.AddParam('SdfVelocityMax',0,2);
@@ -98,6 +100,7 @@ ParamsWindow.AddParam('Damping',0,1);
 ParamsWindow.AddParam('NoiseForce',0,10);
 ParamsWindow.AddParam('PushForce',0,50);
 ParamsWindow.AddParam('PushForceMax',0,50);
+ParamsWindow.AddParam('PushForceAgeMax',0,20);
 ParamsWindow.AddParam('PushRadius',0,0.5);
 ParamsWindow.AddParam('DuplicateOffsetScale',0,1);
 ParamsWindow.AddParam('ParticleDuplicate',0,3,Math.floor);
@@ -176,8 +179,9 @@ class PhysicsTexturesManager
 	OnMouseMove(u,v)
 	{
 		const PushPositionCount = 4;
-		this.PushPositions.push( [u,v] );
+		this.PushPositions.push( [u,v,this.Time] );
 		this.PushPositions = this.PushPositions.slice(-PushPositionCount);
+		Pop.Debug(`PushPositions ${this.PushPositions}`);
 	}
 	
 	CreateVelocityTexture(OriginalPositions)
@@ -249,10 +253,11 @@ class PhysicsTexturesManager
 				Shader.SetUniform('Time', Time);
 				Shader.SetUniform('PushPositions', PushPositions );
 				
-				for ( let [Key,Value] of Object.entries(Params) )
+				function SetUniform(Key)
 				{
-					Shader.SetUniform(Key,Value);
+					Shader.SetUniform( Key, Params[Key] );
 				}
+				Object.keys(Params).forEach(SetUniform);
 			}
 			RenderTarget.ClearColour( 0,0,0 );
 			RenderTarget.SetBlendModeBlit();
@@ -275,6 +280,12 @@ class PhysicsTexturesManager
 				Shader.SetUniform('Velocitys',NewVelocitys);
 				Shader.SetUniform('PhysicsStep',TimeStep);
 				Shader.SetUniform('Time',Time);
+				
+				function SetUniform(Key)
+				{
+					Shader.SetUniform( Key, Params[Key] );
+				}
+				Object.keys(Params).forEach(SetUniform);
 			}
 			RenderTarget.ClearColour( 0,0,0 );
 			RenderTarget.SetBlendModeBlit();
@@ -548,9 +559,7 @@ function Render(RenderTarget)
 	
 	
 	//	render a new sdf
-	RenderTarget.ClearColour( 1,1,0 );
-	
-	const ScreenRect = RenderTarget.GetScreenRect();
+	const ScreenRect = RenderTarget.GetRenderTargetRect();
 	function CallRenderSdf(RenderTarget)
 	{
 		RenderSdf( RenderTarget, ScreenRect );
@@ -582,30 +591,17 @@ function Render(RenderTarget)
 		Object.keys(Params).forEach(SetUniform);
 	}
 
-	RenderTarget.ClearColour( 0,1,0 );
-	RenderTarget.SetBlendModeBlit();
 	RenderTarget.ClearColour( ...Params.BackgroundColour );
+	RenderTarget.SetBlendModeBlit();
 	RenderTarget.DrawGeometry( Geo, Shader, SetUniforms );
 }
 
 
 //	window now shared from bootup
-const Window = new Pop.Opengl.Window("Lunar");
+const Window = new Pop.Opengl.Window('Logo');
 
-const FpsCounter = new Pop.FrameCounter("fps");
+Window.OnRender = Render;
 
-Window.OnRender = function(RenderTarget)
-{
-	try
-	{
-		Render(RenderTarget);
-		FpsCounter.Add();
-	}
-	catch(e)
-	{
-		console.warn(e);
-	}
-}
 Window.OnMouseMove = function(x,y)
 {
 	if ( PhysicsTextures )

@@ -12,12 +12,14 @@ uniform float SpringForce;
 uniform float Damping;
 
 #define PushPositionCount	4
-uniform float2 PushPositions[PushPositionCount];
+uniform float3 PushPositions[PushPositionCount];	//	x,y,time
 uniform float PushRadius;
 uniform float PushForce;
 uniform float PushForceMax;
 
 uniform float VelocityAccumulatorScalar;
+uniform float PushForceAgeMax;
+uniform float Time;
 
 /*
  float3 fade(float3 t)
@@ -131,6 +133,16 @@ float3 GetNoiseForce01(float2 uv)
 	return Noise4.xyz;
 }
 
+float Range(float Min,float Max,float Value)
+{
+	return (Value-Min) / (Max-Min);
+}
+
+float Range01(float Min,float Max,float Value)
+{
+	float t = Range(Min,Max,Value);
+	return min( 1.0, max( t, 0.0 ) );
+}
 
 float3 GetGravityForce(float2 uv)
 {
@@ -145,9 +157,18 @@ float3 GetSpringForce(float2 uv)
 }
 
 //	convert uv to world space
-float3 GetPushPos(float2 Position)
+float3 GetPushPos(float3 PushPositionData)
 {
-	return float3( Position, 0 );
+	float2 xy = PushPositionData.xy;
+	return float3( xy, 0.0 );
+}
+
+float GetPushForceScalar(float3 PushPositionData)
+{
+	float Age = PushPositionData.z;
+	Age = Time - Age;
+	float Scalar = Range01( PushForceAgeMax, 0.0, Age );
+	return Scalar;
 }
 
 //	gr: major performance hit
@@ -158,15 +179,23 @@ float3 GetPushForce(float2 uv)
 	
 	for ( int p=1;	p<PushPositionCount;	p++ )
 	{
-		float Distance = length(LastPos - GetPushPos(PushPositions[p]));
+		float3 PushPositionData = PushPositions[p];
+		float3 PrevPushPositionData = PushPositions[p-1];
+		
+		float3 ForcePos = GetPushPos(PushPositionData);
+		float3 PrevForcePos = GetPushPos(PrevPushPositionData);
+		float ForceScalar = GetPushForceScalar(PushPositionData);
+		
+		float Distance = length(LastPos - ForcePos) * ForceScalar;
 		if ( Distance > PushRadius )
 			continue;
 		
 		float DistanceForce = 1.0 - (Distance / PushRadius);
+		DistanceForce *= ForceScalar;
 		
 		//	make delta the direction the mouse is moving
 		//	need to reduce this amount based on age of movement (mouse doesnt update every frame!)
-		vec3 Delta = GetPushPos(PushPositions[p]) - GetPushPos(PushPositions[p-1]);
+		vec3 Delta = ForcePos - PrevForcePos;
 		if ( length(Delta) <= 0.001 )
 			continue;
 		
