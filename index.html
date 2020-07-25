@@ -21,6 +21,7 @@ html, body
 /* todo: swap for portrait mode */
 #Logo
 {
+	xbackground: blue;
 	position:	absolute;
 	top:		0px;
 	bottom:		0px;
@@ -36,14 +37,21 @@ html, body
 	height:		100vh;
 }
 
+#LogoIdealBox
+{
+	xbackground:red;
+	opacity:0.1;
+	/* this needs to retain aspect ratio of 260/100 */
+	xwidth:	100vw;
+	xheight:	calc( 260/100)
+}
+
 #ContactBox
 {
 	xbackground:	green;
-	position:	absolute;
+	xposition:	absolute;
 	z-index:	2;
-	left:		5vw;
-	right:		5vw;
-	bottom:		20vmin;
+	padding-bottom:4vh;
 }
 
 h1,h2,h3,h4,a
@@ -58,6 +66,14 @@ h1,h2,h3,h4,a
 	text-align:		center;
 }
 
+h1,h2,h3,h4
+{
+	/* gr: this is to let mouse events go to the canvas/code but it's not working
+	pointer-events:	none;
+	user-select: none;
+	 */
+}
+
 h3
 {
 	margin-top:	2vh;
@@ -65,15 +81,75 @@ h3
 
 h1,h2
 {
-	font-size:	 	4vw;
+	xxfont-size:	 	4vw;
 }
+
+a
+{
+	display:block;
+	color:	#0ff;
+}
+
+
+/*
+ https://the-echoplex.net/flexyboxes/
+ */
+.flex-container {
+	display: -ms-flexbox;
+	display: -webkit-flex;
+	display: flex;
+	-webkit-flex-direction: column;
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-webkit-flex-wrap: nowrap;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+	-webkit-justify-content: flex-end;
+	-ms-flex-pack: end;
+	justify-content: flex-end;
+	-webkit-align-content: stretch;
+	-ms-flex-line-pack: stretch;
+	align-content: stretch;
+	-webkit-align-items: stretch;
+	-ms-flex-align: stretch;
+	align-items: stretch;
+}
+
+.flex-item:nth-child(1) {
+	-webkit-order: 0;
+	-ms-flex-order: 0;
+	order: 0;
+	-webkit-flex: 1 1 auto;
+	-ms-flex: 1 1 auto;
+	flex: 1 1 auto;
+	-webkit-align-self: stretch;
+	-ms-flex-item-align: stretch;
+	align-self: stretch;
+}
+
+.flex-item:nth-child(2) {
+	-webkit-order: 0;
+	-ms-flex-order: 0;
+	order: 0;
+	-webkit-flex: 0 1 auto;
+	-ms-flex: 0 1 auto;
+	flex: 0 1 auto;
+	-webkit-align-self: center;
+	-ms-flex-item-align: center;
+	align-self: center;
+}
+
+
 
 </style>
 </head>
 <body>
-	<div id=LogoContainer>
-		<canvas id="Logo">The New Chromantics</canvas>
-		<div id=ContactBox>
+	<!-- canvas fills background, then reads the LogoIdealBox -->
+	<canvas id="Logo">The New Chromantics</canvas>
+	
+	<div id=LogoContainer class=flex-container>
+		<div class=flex-item id=LogoIdealBox>&nbsp;</div>
+		<div class=flex-item id=ContactBox>
 			<h2>
 				Interactive Installations,<br />
 				Virtual Reality,<br />
@@ -82,8 +158,8 @@ h1,h2
 				Realtime<br />
 				Creative Developers.</h2>
 			<h3>Amwell Street, London. EC1R 1UT</h3>
-			<h4><a href=tel:+447980895992>07980895992</a></h4>
-			<h4><a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a></h4>
+			<a href=tel:+447980895992>07980895992</a>
+			<a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a>
 		</div>
 	</div>
 

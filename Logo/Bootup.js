@@ -333,41 +333,71 @@ function GetOriginalPositionRect()
 	return [x,y,w,h];
 }
 
+//	return Rect, but shrunk/grown to center in ParentRect maintaining aspect
+function FitRectMaintainingAspect(Rect,ParentRect)
+{
+	//	dont modify original
+	Rect = Rect.slice();
+	
+	//	scale so width fits
+	const WidthScale = ParentRect[2] / Rect[2];
+	Rect[0] *= WidthScale;
+	Rect[1] *= WidthScale;
+	Rect[2] *= WidthScale;
+	Rect[3] *= WidthScale;
+
+	//	now if the height doesn't fit, scale down
+	if ( Rect[3] > ParentRect[3] )
+	{
+		const HeightScale = ParentRect[3] / Rect[3];
+		Rect[0] *= HeightScale;
+		Rect[1] *= HeightScale;
+		Rect[2] *= HeightScale;
+		Rect[3] *= HeightScale;
+	}
+	
+	//	now center
+	//	gr: maybe should have other rules like, "stay in place where possible" ?
+	Rect[0] = (ParentRect[2] - Rect[2]) / 2;
+	Rect[1] = (ParentRect[3] - Rect[3]) / 2;
+
+	return Rect;
+}
+
 function UpdateOriginalPositionRect(ScreenRect)
 {
 	if ( !Params.UpdateOrigRectWithScreen )
 		return;
 	
-	//	gr: really should fetch this from the DOM.
-	
-	//	gr: need the original aspect etc bounds here?
-	//	original aspect must be 1:1... as its straight out of the svg...
-	//	fit the top center
-	const sw = ScreenRect[2];
-	const sh = ScreenRect[3];
-	
-	if ( sw > sh )
+	function DomRectToRect4(DomRect)
 	{
-		let w = sh / sw;
-		let x = (1 - w)/2;
-		let y = 0;
-		let h = 1;
-		Params.OrigRectX = x;
-		Params.OrigRectY = y;
-		Params.OrigRectW = w;
-		Params.OrigRectH = h;
+		return [DomRect.x,DomRect.y,DomRect.width,DomRect.height];
 	}
-	else
-	{
-		let h = sw / sh;
-		let y = 0;// (1 - h)/2;
-		let x = 0;
-		let w = 1;
-		Params.OrigRectX = x;
-		Params.OrigRectY = y;
-		Params.OrigRectW = w;
-		Params.OrigRectH = h;
-	}
+	
+	//	try getting rect from the dom
+	const IdealBoxElement = document.getElementById('LogoIdealBox');
+	const DomRect = DomRectToRect4( IdealBoxElement.getBoundingClientRect() );
+	const BodyRect = DomRectToRect4( document.body.getBoundingClientRect() );
+	const CanvasRect = DomRectToRect4( document.getElementById('Logo').getBoundingClientRect() );	//	ScreenRect?
+	
+	//	the ideal box tells us where our SVG space should occupy (260x100)
+	//	we need to then get the UV space rect of that in the box of the canvas
+	//	(which should be screen rect)
+	let SvgRect = [0,0,260/260,100/260];
+	
+	//	fit svg rect into the ideal-space rect
+	SvgRect = FitRectMaintainingAspect(SvgRect,DomRect);
+	
+	//	now we force it to be 1:1 so height overflows (but the ideal part is the same)
+	SvgRect[3] = SvgRect[2];
+
+	//	now we want that rect normalised in the canvas rect
+	let OrigRect = GetNormalisedRect( SvgRect, CanvasRect );
+	
+	Params.OrigRectX = OrigRect[0];
+	Params.OrigRectY = OrigRect[1];
+	Params.OrigRectW = OrigRect[2];
+	Params.OrigRectH = OrigRect[3];
 	
 	ParamsWindow.OnParamChanged('OrigRectX');
 	ParamsWindow.OnParamChanged('OrigRectY');
