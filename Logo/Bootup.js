@@ -181,7 +181,6 @@ class PhysicsTexturesManager
 		const PushPositionCount = 4;
 		this.PushPositions.push( [u,v,this.Time] );
 		this.PushPositions = this.PushPositions.slice(-PushPositionCount);
-		Pop.Debug(`PushPositions ${this.PushPositions}`);
 	}
 	
 	CreateVelocityTexture(OriginalPositions)

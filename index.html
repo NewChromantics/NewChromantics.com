@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<title>The New Chromantics</title>
 	<link rel="stylesheet" type="text/css" href="Logo/Editor_win95.css" />
 <style>
 	/* disable scrolling on ios
@@ -20,16 +21,54 @@ html, body
 /* todo: swap for portrait mode */
 #Logo
 {
+	position:	absolute;
+	top:		0px;
+	bottom:		0px;
+	width:		100%;
+	
 	text-size:	0px;
+}
+
+#LogoContainer
+{
+	position:	relative;
 	width:		100vw;
-	height:		80vh;
+	height:		100vh;
+}
+
+#ContactBox
+{
+	xbackground:	green;
+	position:	absolute;
+	z-index:	2;
+	bottom:		10vh;
+	width:		100%;
+}
+
+h1,h2,h3,h4,a
+{
+	xbackground:		blue;
+	color:			black;
+	font-size:	 	4vmin;
+	font-family:	sans-serif;
+	font-weight:	bold;
+	padding:		0px;
+	margin:			0px;
+	text-align:		center;
 }
 
 </style>
 </head>
 <body>
-	
-	<canvas id="Logo">The New Chromantics</canvas>
+	<div id=LogoContainer>
+		<canvas id="Logo">The New Chromantics</canvas>
+		<div id=ContactBox>
+			<h2>Creative/Mobile/VR/AR Developers.</h2>
+			<h3>Amwell Street, London. EC1R 1UT</h3>
+			<h4><a href=tel:+447980895992>07980895992</a></h4>
+			<h4><a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a></h4>
+		</div>
+	</div>
 
 	<script src='PopEngineCommon/PopWebApi.js'></script>
 	<script src='PopEngineCommon/PopApi.js'></script>
