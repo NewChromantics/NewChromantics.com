@@ -10,6 +10,7 @@ uniform float NoiseForce;// = 0.1;
 uniform float GravityForce;// = -0.1;
 uniform float SpringForce;
 uniform float Damping;
+uniform float4 OrigPositionsRect;
 
 #define PushPositionCount	4
 uniform float3 PushPositions[PushPositionCount];	//	x,y,time
@@ -149,10 +150,26 @@ float3 GetGravityForce(float2 uv)
 	return float3(0,GravityForce,0);
 }
 
+float3 GetOriginalPosition(float2 uv)
+{
+	//	get the original positions which are normalised in the svg
+	vec2 Pos = texture2D( OrigPositions, uv ).xy;
+
+	//	move them to our render rect
+	Pos = mix( OrigPositionsRect.xy, OrigPositionsRect.xy+OrigPositionsRect.zw, Pos );
+	return float3(Pos,0);
+}
+
+float3 GetLastPosition(float2 uv)
+{
+	vec3 LastPos = texture2D( LastPositions, uv ).xyz;
+	return LastPos;
+}
+
 float3 GetSpringForce(float2 uv)
 {
-	vec3 OrigPos = texture2D( OrigPositions, uv ).xyz;
-	vec3 LastPos = texture2D( LastPositions, uv ).xyz;
+	vec3 OrigPos = GetOriginalPosition(uv);
+	vec3 LastPos = GetLastPosition(uv);
 	return (OrigPos - LastPos) * SpringForce;
 }
 
@@ -171,10 +188,9 @@ float GetPushForceScalar(float3 PushPositionData)
 	return Scalar;
 }
 
-//	gr: major performance hit
 float3 GetPushForce(float2 uv)
 {
-	vec3 LastPos = texture2D( LastPositions, uv ).xyz;
+	vec3 LastPos = GetLastPosition(uv);
 	vec3 Force = float3(0,0,0);
 	
 	for ( int p=1;	p<PushPositionCount;	p++ )
@@ -219,7 +235,7 @@ void main()
 	
 	Vel.z = 0.0;
 	float3 PushForce = GetPushForce(uv);
-
+	
 	//Vel.xyz += GetNoiseForce(uv) * PhysicsStep;
 	Vel.xyz += GetGravityForce(uv) ;//* PhysicsStep;
 	Vel.xyz += GetSpringForce(uv) ;//* PhysicsStep;

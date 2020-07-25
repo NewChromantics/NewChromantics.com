@@ -61,21 +61,32 @@ Params.AntiAlias = 0.05;
 Params.SpringForce = 0.8;
 Params.GravityForce = 0.0;
 Params.Damping = 0.22;
-Params.NoiseForce = 0.0;
+Params.NoiseForce = 0.7;
 Params.PushRadius = 0.15;
 Params.PushForce = 35.0;
 Params.PushForceMax = 40.0;
-Params.PushForceAgeMax = 4;
+Params.PushForceAgeMax = 2;
 Params.ParticleDuplicate = 1;
 Params.DuplicateOffsetScale = 0.04;
 Params.ParticleVertexScale = 0.65;	//	vertex scale to reduce overdraw
 Params.VelocityAccumulatorScalar = 0.1;
 Params.UseAccumulatedVelocity = true;
+Params.UpdateOrigRectWithScreen = true;	//	let people turn this off to play :)
+Params.OrigRectX = 0;
+Params.OrigRectY = 0;
+Params.OrigRectW = 1;
+Params.OrigRectH = 1;
 
 Object.assign( Params, Pop.GetExeArguments() );
 
 const ParamsWindowRect = [400,600,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
+
+ParamsWindow.AddParam('OrigRectX',0,1);
+ParamsWindow.AddParam('OrigRectY',0,1);
+ParamsWindow.AddParam('OrigRectW',0,1);
+ParamsWindow.AddParam('OrigRectH',0,1);
+ParamsWindow.AddParam('UpdateOrigRectWithScreen');
 
 ParamsWindow.AddParam('FinalColourA','Colour');
 ParamsWindow.AddParam('FinalColourB','Colour');
@@ -136,7 +147,7 @@ function InvalidateParticlesAsset()
 //	current positions, double buffered
 class PhysicsTexturesManager
 {
-	constructor(OriginalPositions,EnableDebugWindow)
+	constructor(OriginalPositions,GetOriginalPositionRect,EnableDebugWindow)
 	{
 		//	back buffer flipper
 		//	a=true means A = current
@@ -152,6 +163,7 @@ class PhysicsTexturesManager
 		
 		this.Time = 0;
 		this.OriginalPositions = OriginalPositions;
+		this.GetOriginalPositionRect = GetOriginalPositionRect;
 		this.PushPositions = [];
 		
 		if ( EnableDebugWindow )
@@ -221,20 +233,34 @@ class PhysicsTexturesManager
 		const TimeStep = 1/60;
 		this.Time += TimeStep;
 		
-		//	update velocities from current buffer to back buffer
-		this.UpdateVelocitys( RenderContext, OldVel, NewVel, OldPos, this.OriginalPositions, TimeStep, this.Time );
+		try
+		{
+			//	update velocities from current buffer to back buffer
+			this.UpdateVelocitys( RenderContext, OldVel, NewVel, OldPos, this.OriginalPositions, TimeStep );
 
-		//	update positions from current buffer to back buffer
-		this.UpdatePositions( RenderContext, OldPos, NewPos, NewVel, TimeStep, this.Time );
-
+			//	update positions from current buffer to back buffer
+			this.UpdatePositions( RenderContext, OldPos, NewPos, NewVel, TimeStep );
+		}
+		catch(e)
+		{
+			Pop.Warning(e);
+		}
+		
 		//	move back buffer to front
 		this.BufferA = !this.BufferA;
 	}
 	
-	UpdateVelocitys(RenderContext,OldVelocitys,NewVelocitys,Positions,OriginalPositions,TimeStep,Time)
+	UpdateVelocitys(RenderContext,OldVelocitys,NewVelocitys,Positions,OriginalPositions,TimeStep)
 	{
+		const Time = this.Time;
 		const PushPositions = this.PushPositions;
+
+		//	to aid resizing and different layouts
+		//	instead of scaling, we change the rect where original positions
+		//	should be, so resizing will move particles into place
+		const OrigPositionsRect = this.GetOriginalPositionRect();
 		
+
 		function Render(RenderTarget)
 		{
 			const RenderContext = RenderTarget;
@@ -246,11 +272,13 @@ class PhysicsTexturesManager
 			{
 				Shader.SetUniform('LastVelocitys',OldVelocitys);
 				Shader.SetUniform('OrigPositions',OriginalPositions);
+				Shader.SetUniform('OrigPositionsRect',OrigPositionsRect);
 				Shader.SetUniform('LastPositions',Positions);
 				Shader.SetUniform('Noise',Noise);
 				Shader.SetUniform('PhysicsStep',TimeStep);
 				Shader.SetUniform('Time', Time);
 				Shader.SetUniform('PushPositions', PushPositions );
+				Shader.SetUniform('VertexRect',[0,0,1,1]);
 				
 				function SetUniform(Key)
 				{
@@ -279,6 +307,7 @@ class PhysicsTexturesManager
 				Shader.SetUniform('Velocitys',NewVelocitys);
 				Shader.SetUniform('PhysicsStep',TimeStep);
 				Shader.SetUniform('Time',Time);
+				Shader.SetUniform('VertexRect',[0,0,1,1]);
 				
 				function SetUniform(Key)
 				{
@@ -295,11 +324,61 @@ class PhysicsTexturesManager
 }
 
 
+function GetOriginalPositionRect()
+{
+	const x = Params.OrigRectX;
+	const y = Params.OrigRectY;
+	const w = Params.OrigRectW;
+	const h = Params.OrigRectH;
+	return [x,y,w,h];
+}
+
+function UpdateOriginalPositionRect(ScreenRect)
+{
+	if ( !Params.UpdateOrigRectWithScreen )
+		return;
+	
+	//	gr: really should fetch this from the DOM.
+	
+	//	gr: need the original aspect etc bounds here?
+	//	original aspect must be 1:1... as its straight out of the svg...
+	//	fit the top center
+	const sw = ScreenRect[2];
+	const sh = ScreenRect[3];
+	
+	if ( sw > sh )
+	{
+		let w = sh / sw;
+		let x = (1 - w)/2;
+		let y = 0;
+		let h = 1;
+		Params.OrigRectX = x;
+		Params.OrigRectY = y;
+		Params.OrigRectW = w;
+		Params.OrigRectH = h;
+	}
+	else
+	{
+		let h = sw / sh;
+		let y = 0;// (1 - h)/2;
+		let x = 0;
+		let w = 1;
+		Params.OrigRectX = x;
+		Params.OrigRectY = y;
+		Params.OrigRectW = w;
+		Params.OrigRectH = h;
+	}
+	
+	ParamsWindow.OnParamChanged('OrigRectX');
+	ParamsWindow.OnParamChanged('OrigRectY');
+	ParamsWindow.OnParamChanged('OrigRectW');
+	ParamsWindow.OnParamChanged('OrigRectH');
+}
+
 function GetPositionsTexture(RenderContext)
 {
-	//const EnableDebugWindow = Pop.GetExeArguments().ShowPhysicsTextures;
-	const EnableDebugWindow = true;
-
+	const EnableDebugWindow = Pop.GetExeArguments().ShowPhysicsTextures;
+	
 	//const WorldPositions = GetAsset('LogoParticlePositions',RenderContext);
 	//return WorldPositions;
 	
@@ -307,7 +386,7 @@ function GetPositionsTexture(RenderContext)
 	if ( !PhysicsTextures )
 	{
 		const OriginalPositions = GetAsset('LogoParticlePositions',RenderContext);
-		PhysicsTextures = new PhysicsTexturesManager(OriginalPositions,EnableDebugWindow);
+		PhysicsTextures = new PhysicsTexturesManager(OriginalPositions,GetOriginalPositionRect,EnableDebugWindow);
 		
 		//	do first iteration so things are initialised
 		PhysicsTextures.Iteration(RenderContext);
@@ -328,6 +407,7 @@ function PhysicsIteration(RenderContext)
 	//	dont make here
 	if ( !PhysicsTextures )
 		return;
+	
 	PhysicsTextures.Iteration(RenderContext);
 }
 
@@ -513,7 +593,7 @@ function CreateQuadGeometry(RenderTarget)
 
 
 
-function RenderSdf(RenderTarget,AspectRect)
+function RenderSdf(RenderTarget)
 {
 	//	gr: asset fetching should be context
 	//const RenderContext = RenderTarget.GetRenderContext();
@@ -525,7 +605,7 @@ function RenderSdf(RenderTarget,AspectRect)
 	const Geo = GetAsset('LogoParticleGeo',RenderContext);
 	const LocalPositions = [	-1,-1,0,	1,-1,0,	0,1,0	];
 	const RenderTargetRect = RenderTarget.GetRenderTargetRect();
-	const AspectRatio = AspectRect[3] / AspectRect[2];
+	const AspectRatio = 1;//AspectRect[3] / AspectRect[2];
 
 	const SetUniforms = function(Shader)
 	{
@@ -535,6 +615,7 @@ function RenderSdf(RenderTarget,AspectRect)
 		Shader.SetUniform('WorldPositionsWidth',WorldPositions.GetWidth());
 		Shader.SetUniform('WorldPositionsHeight',WorldPositions.GetHeight());
 		Shader.SetUniform('ProjectionAspectRatio',AspectRatio);
+		Shader.SetUniform('VertexRect',[0,0,1,1]);
 		
 		function SetUniform(Key)
 		{
@@ -553,6 +634,8 @@ function RenderSdf(RenderTarget,AspectRect)
 
 function Render(RenderTarget)
 {
+	UpdateOriginalPositionRect(RenderTarget.GetScreenRect());
+	
 	//	update physics
 	PhysicsIteration(RenderTarget);
 	
@@ -582,6 +665,7 @@ function Render(RenderTarget)
 	{
 		Shader.SetUniform('SdfTexture',PositionsSdf);
 		Shader.SetUniform('ProjectionAspectRatio',AspectRatio);
+		Shader.SetUniform('VertexRect',[0,0,1,1]);
 		
 		function SetUniform(Key)
 		{

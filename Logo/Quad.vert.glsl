@@ -1,4 +1,4 @@
-const vec4 VertexRect = vec4(0,0,1,1);
+uniform vec4 VertexRect;
 in vec2 TexCoord;
 out vec2 uv;
 
