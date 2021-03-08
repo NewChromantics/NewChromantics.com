@@ -9,162 +9,52 @@
 	 */
 html, body
 {
-	background-color:	#fff;
-	position:	fixed;
+	background-color:	#000;
+	color:		#eee;
 	width:		100vw;
 	margin:		0px;
 	padding:	0px;
 	
-	height:		100vh;
 	height:		-moz-available;          /* WebKit-based browsers will ignore this. */
 	height:		-webkit-fill-available;  /* Mozilla-based browsers will ignore this. */
 	height:		fill-available;
+	
+	font-family:	sans-serif;
 }
 
+a, a:active, a:visited
+{
+	color:	#fff;
+}
 
-/* todo: swap for portrait mode */
+:root
+{
+	--LogoHeight:	calc(min(90vh,100vw));
+}
+
 #Logo
 {
-	xbackground: blue;
-	position:	absolute;
-	top:		0px;
-	bottom:		0px;
-	width:		100%;
-	
-	text-size:	0px;
+	height:	var(--LogoHeight);
+	width:	100vw;
+	xbackground:blue;
 }
 
-#LogoContainer
+#Content
 {
-	position:	relative;
-	width:		100vw;
-	height:		100vh;
-}
-
-#LogoIdealBox
-{
-	xbackground:red;
-	opacity:0.1;
-	/* this needs to retain aspect ratio of 260/100 */
-	xwidth:	100vw;
-	xheight:	calc( 260/100)
-}
-
-#ContactBox
-{
-	xbackground:	green;
-	xposition:	absolute;
-	z-index:	2;
-	padding-bottom:4vh;
-}
-
-h1,h2,h3,h4,a
-{
-	xbackground:	blue;
-	color:			black;
-	font-size:	 	3vw;
-	font-family:	sans-serif;
-	font-weight:	bold;
-	padding:		0px;
-	margin:			0px;
+	xmargin-top:	var(--LogoHeight);
 	text-align:		center;
 }
 
-h1,h2,h3,h4
-{
-	/* gr: this is to let mouse events go to the canvas/code but it's not working
-	pointer-events:	none;
-	user-select: none;
-	 */
-}
-
-h3
-{
-	margin-top:	2vh;
-}
-
-h1,h2
-{
-	xxfont-size:	 	4vw;
-}
-
-a
-{
-	display:block;
-	color:	#0ff;
-}
-
-
-/*
- https://the-echoplex.net/flexyboxes/
- */
-.flex-container {
-	display: -ms-flexbox;
-	display: -webkit-flex;
-	display: flex;
-	-webkit-flex-direction: column;
-	-ms-flex-direction: column;
-	flex-direction: column;
-	-webkit-flex-wrap: nowrap;
-	-ms-flex-wrap: nowrap;
-	flex-wrap: nowrap;
-	-webkit-justify-content: flex-end;
-	-ms-flex-pack: end;
-	justify-content: flex-end;
-	-webkit-align-content: stretch;
-	-ms-flex-line-pack: stretch;
-	align-content: stretch;
-	-webkit-align-items: stretch;
-	-ms-flex-align: stretch;
-	align-items: stretch;
-}
-
-.flex-item:nth-child(1) {
-	-webkit-order: 0;
-	-ms-flex-order: 0;
-	order: 0;
-	-webkit-flex: 1 1 auto;
-	-ms-flex: 1 1 auto;
-	flex: 1 1 auto;
-	-webkit-align-self: stretch;
-	-ms-flex-item-align: stretch;
-	align-self: stretch;
-}
-
-.flex-item:nth-child(2) {
-	-webkit-order: 0;
-	-ms-flex-order: 0;
-	order: 0;
-	-webkit-flex: 0 1 auto;
-	-ms-flex: 0 1 auto;
-	flex: 0 1 auto;
-	-webkit-align-self: center;
-	-ms-flex-item-align: center;
-	align-self: center;
-}
 
 
 
 </style>
 </head>
 <body>
-	<!-- canvas fills background, then reads the LogoIdealBox -->
 	<canvas id="Logo">The New Chromantics</canvas>
-	
-	<div id=LogoContainer class=flex-container>
-		<div class=flex-item id=LogoIdealBox>&nbsp;</div>
-		<div class=flex-item id=ContactBox>
-			<h2>
-				Interactive Installations,<br />
-				Virtual Reality,<br />
-				Augmented Reality,<br />
-				Computer Vision/AI,<br />
-				Realtime<br />
-				Creative Developers.</h2>
-			<h3>Amwell Street, London. EC1R 1UT</h3>
-			<a href=tel:+447980895992>07980895992</a>
-			<a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a>
-		</div>
+	<div id="Content">
+		<a href=tel:+447980895992>07980895992</a>
+		<a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a>
 	</div>
 
 	<script src='PopEngineCommon/PopWebApi.js'></script>

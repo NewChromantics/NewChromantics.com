@@ -44,6 +44,7 @@ function OnParamsChanged(Params,ParamChanged)
 	}
 }
 
+Params.Debug = false;
 Params.FinalColourA = [0,1,1];
 Params.FinalColourB = [1,0,1];
 Params.SdfVelocityMax = 1;
@@ -52,7 +53,7 @@ Params.WorldScale = 1;
 Params.ParticleCount = 1000;
 Params.DebugParticles = false;
 Params.DebugSdf = false;
-Params.BackgroundColour = [1,1,1];
+Params.BackgroundColour = [0,0,0];
 Params.SdfMin = 0.48;
 Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 3;
@@ -60,12 +61,12 @@ Params.DebugSdfSample = false;
 Params.AntiAlias = 0.05;
 Params.SpringForce = 0.8;
 Params.GravityForce = 0.0;
-Params.Damping = 0.22;
+Params.Damping = 0.5;
 Params.NoiseForce = 0.7;
-Params.PushRadius = 0.15;
+Params.PushRadius = 0.10;
 Params.PushForce = 35.0;
 Params.PushForceMax = 40.0;
-Params.PushForceAgeMax = 2;
+Params.PushForceAgeMax = 18;	//	gr: really low value causes a wierd ripple
 Params.ParticleDuplicate = 1;
 Params.DuplicateOffsetScale = 0.04;
 Params.ParticleVertexScale = 0.65;	//	vertex scale to reduce overdraw
@@ -80,7 +81,9 @@ Params.OrigRectH = 1;
 Object.assign( Params, Pop.GetExeArguments() );
 
 const ParamsWindowRect = [400,600,350,200];
-var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
+const ParamsWindowType = Params.Debug ? Pop.ParamsWindow : Pop.DummyParamsWindow;
+const ParamsWindow = new ParamsWindowType(Params,OnParamsChanged,ParamsWindowRect);
+//ParamsWindow.SetMinimised(!Params.Debug);
 
 ParamsWindow.AddParam('OrigRectX',0,1);
 ParamsWindow.AddParam('OrigRectY',0,1);
@@ -117,12 +120,20 @@ ParamsWindow.AddParam('DuplicateOffsetScale',0,1);
 ParamsWindow.AddParam('ParticleDuplicate',0,3,Math.floor);
 
 
-const Rect = [500,500,100,100];
-const RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
+let RenderTimelineWindow;
+if ( Params.Debug )
+{
+	const Rect = [500,500,100,100];
+	RenderTimelineWindow = new Pop.Gui.RenderTimelineWindow("Render Stats",Rect);
+}
 
-const SdfWindow = new Pop.Gui.Window('Sdf',[0,300,300,300]);
-const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
-SdfWindow.SetMinimised();
+let SdfWindow;
+if ( Params.Debug )
+{
+	SdfWindow = new Pop.Gui.Window('Sdf',[0,300,300,300]);
+	const SdfPreview = new Pop.Gui.ImageMap(SdfWindow,[0,0,'100%','100%']);
+	SdfWindow.SetMinimised();
+}
 
 //	texture we draw SD positions to
 const PositionsSdf = new Pop.Image( [1024,1024], 'RGBA' );
@@ -369,21 +380,13 @@ function UpdateOriginalPositionRect(ScreenRect)
 	if ( !Params.UpdateOrigRectWithScreen )
 		return;
 	
-	function DomRectToRect4(DomRect)
-	{
-		return [DomRect.x,DomRect.y,DomRect.width,DomRect.height];
-	}
-	
-	//	try getting rect from the dom
-	const IdealBoxElement = document.getElementById('LogoIdealBox');
-	const DomRect = DomRectToRect4( IdealBoxElement.getBoundingClientRect() );
-	const BodyRect = DomRectToRect4( document.body.getBoundingClientRect() );
-	const CanvasRect = DomRectToRect4( document.getElementById('Logo').getBoundingClientRect() );	//	ScreenRect?
-	
 	//	the ideal box tells us where our SVG space should occupy (260x100)
 	//	we need to then get the UV space rect of that in the box of the canvas
 	//	(which should be screen rect)
 	let SvgRect = [0,0,260/260,100/260];
+	
+	const DomRect = ScreenRect;
+	const CanvasRect = ScreenRect;
 	
 	//	fit svg rect into the ideal-space rect
 	SvgRect = FitRectMaintainingAspect(SvgRect,DomRect);
@@ -676,7 +679,7 @@ function Render(RenderTarget)
 	{
 		RenderSdf( RenderTarget, ScreenRect );
 	}
-	const ReadBack = !SdfWindow.IsMinimised();
+	const ReadBack = SdfWindow && !SdfWindow.IsMinimised();
 	RenderTarget.RenderToRenderTarget( PositionsSdf, CallRenderSdf, ReadBack );
 	if ( ReadBack )
 		SdfPreview.SetImage(PositionsSdf);
@@ -717,6 +720,7 @@ Window.OnRender = Render;
 
 Window.OnMouseMove = function(x,y)
 {
+	const Args = Array.from(arguments);
 	if ( PhysicsTextures )
 	{
 		const Rect = Window.GetScreenRect();
@@ -725,4 +729,3 @@ Window.OnMouseMove = function(x,y)
 		PhysicsTextures.OnMouseMove(u,v);
 	}
 }
-
