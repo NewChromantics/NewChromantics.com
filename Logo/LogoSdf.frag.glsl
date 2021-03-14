@@ -1,6 +1,8 @@
 precision highp float;
 
 uniform sampler2D SdfTexture;
+uniform float SdfTextureWidth;
+uniform float SdfTextureHeight;
 varying vec2 uv;
 uniform float SdfMin;
 uniform float SampleDelta;
@@ -8,11 +10,15 @@ uniform float ProjectionAspectRatio;
 uniform int SampleWeightSigma;
 uniform bool DebugSdfSample;
 uniform float AntiAlias;
-uniform float SdfVelocityMax;
 uniform float3 FinalColourA;
 uniform float3 FinalColourB;
 uniform bool UseAccumulatedVelocity;
 uniform float3 BackgroundColour;
+
+uniform float VelocityBlurSigma;
+uniform float VelocityColourRangeMin;
+uniform float VelocityColourRangeMax;
+#define SdfTextureSize	vec2( SdfTextureWidth, SdfTextureHeight )
 
 //	when we render the sdf, it's upside down
 //	I think the viewport is upside down in RenderToTexture()
@@ -36,11 +42,58 @@ float GetOffsetSample(float2 uv,float2 Offset)
 	return Sample;
 }
 
+float normpdf(in float x, in float sigma)
+{
+	return 0.39894*exp(-0.5*x*x/(sigma*sigma))/sigma;
+}
+
+//	gr: adapted from https://www.shadertoy.com/view/XdfGDH
+vec4 SampleBlurred(sampler2D Texture,in vec2 fragCoord )
+{
+	//declare stuff
+	#define mSize 8	//	11 in https://www.shadertoy.com/view/XdfGDH doesnt work on my 2013 macbook
+	#define kSize ( (mSize-1)/2 )
+	float kernel[mSize];
+	vec4 final_colour = vec4(0,0,0,0);
+	
+	//create the 1-D kernel
+	float sigma = VelocityBlurSigma;
+	for (int j = 0; j <= kSize; ++j)
+	{
+		kernel[kSize+j] = kernel[kSize-j] = normpdf(float(j), sigma);
+	}
+	
+	//get the normalization factor (as the gaussian has been clamped)
+	float Z = 0.0;
+	for (int j = 0; j < mSize; ++j)
+	{
+		Z += kernel[j];
+	}
+	
+	//read out the texels
+	for (int i=-kSize; i <= kSize; ++i)
+	{
+		for (int j=-kSize; j <= kSize; ++j)
+		{
+			vec2 uvoffset = vec2(float(i),float(j)) / SdfTextureSize.xy; 
+			final_colour += kernel[kSize+j]*kernel[kSize+i] * texture2D(Texture, fragCoord.xy+uvoffset);
+		}
+	}
+	
+	
+	final_colour = final_colour/(Z*Z);
+	return final_colour;
+}
 
 float2 GetSampleVelocity(float2 uv)
 {
 	uv.y = 1.0 - uv.y;
-	float4 Sample = texture2D( SdfTexture, uv );
+	//float4 Sample = texture2D( SdfTexture, uv );
+	
+	//	lets try and blend...
+	//	maybe we can find a way to do this in a nicer way with the blend mode
+	float4 Sample = SampleBlurred( SdfTexture, uv );
+		
 	return Sample.yz;
 }
 
@@ -195,8 +248,9 @@ void main()
 	else
 		Blend = Range(1.0,0.5,Blend);
 	
-	
+	Blend = Range( VelocityColourRangeMin, VelocityColourRangeMax, Blend );
 	float3 Rgb = mix( FinalColourA, FinalColourB, Blend );
+
 	/*
 	//float3 Rgb = float3(1,1,1);
 	//float3 Rgb = mix( float3(0.5,0.5,0.5),float3(1,1,1),Velocity3);

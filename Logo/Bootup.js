@@ -47,14 +47,15 @@ function OnParamsChanged(Params,ParamChanged)
 Params.Debug = false;
 Params.FinalColourA = [0,1,1];
 Params.FinalColourB = [1,0,1];
-Params.SdfVelocityMax = 1;
+Params.VelocityColourRangeMin = 0;
+Params.VelocityColourRangeMax = 0.4;
 Params.LocalScale = 8.0;
 Params.WorldScale = 1;
 Params.ParticleCount = 1000;
 Params.DebugParticles = false;
 Params.DebugSdf = false;
 Params.BackgroundColour = [0,0,0];
-Params.SdfMin = 0.48;
+Params.SdfMin = 0.30;
 Params.SampleDelta = 0.005;
 Params.SampleWeightSigma = 3;
 Params.DebugSdfSample = false;
@@ -62,7 +63,7 @@ Params.AntiAlias = 0.05;
 Params.SpringForce = 0.8;
 Params.GravityForce = 0.0;
 Params.Damping = 0.5;
-Params.NoiseForce = 0.7;
+Params.NoiseForce = 0.2;
 Params.PushRadius = 0.10;
 Params.PushForce = 35.0;
 Params.PushForceMax = 40.0;
@@ -71,7 +72,8 @@ Params.ParticleDuplicate = 1;
 Params.DuplicateOffsetScale = 0.04;
 Params.ParticleVertexScale = 0.65;	//	vertex scale to reduce overdraw
 Params.VelocityAccumulatorScalar = 0.1;
-Params.UseAccumulatedVelocity = true;
+Params.VelocityBlurSigma = 10;
+Params.UseAccumulatedVelocity = false;
 Params.UpdateOrigRectWithScreen = true;	//	let people turn this off to play :)
 Params.OrigRectX = 0;
 Params.OrigRectY = 0;
@@ -91,12 +93,14 @@ ParamsWindow.AddParam('OrigRectW',0,1);
 ParamsWindow.AddParam('OrigRectH',0,1);
 ParamsWindow.AddParam('UpdateOrigRectWithScreen');
 
+ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('FinalColourA','Colour');
 ParamsWindow.AddParam('FinalColourB','Colour');
-ParamsWindow.AddParam('BackgroundColour','Colour');
+ParamsWindow.AddParam('VelocityColourRangeMin',0,1);
+ParamsWindow.AddParam('VelocityColourRangeMax',0,1);
+ParamsWindow.AddParam('VelocityBlurSigma',0,50);
 ParamsWindow.AddParam('UseAccumulatedVelocity');
 ParamsWindow.AddParam('VelocityAccumulatorScalar',0,1);
-ParamsWindow.AddParam('SdfVelocityMax',0,2);
 ParamsWindow.AddParam('AntiAlias',0,0.1);
 ParamsWindow.AddParam('ParticleVertexScale',0.001,1.5);
 ParamsWindow.AddParam('LocalScale',0,50.0);
@@ -136,7 +140,9 @@ if ( Params.Debug )
 }
 
 //	texture we draw SD positions to
-const PositionsSdf = new Pop.Image( [1024,1024], 'RGBA' );
+const HiRes = true;
+const ResScale = HiRes ? 3 : 1;
+const PositionsSdf = new Pop.Image( [ResScale*1024,ResScale*1024], 'RGBA' );
 PositionsSdf.SetLinearFilter(true);
 
 let PhysicsTextures = null;	//PhysicsTexturesManager
@@ -697,6 +703,9 @@ function Render(RenderTarget)
 	const SetUniforms = function(Shader)
 	{
 		Shader.SetUniform('SdfTexture',PositionsSdf);
+		Shader.SetUniform('SdfTextureWidth',PositionsSdf.GetWidth());
+		Shader.SetUniform('SdfTextureHeight',PositionsSdf.GetHeight());
+		
 		Shader.SetUniform('ProjectionAspectRatio',AspectRatio);
 		Shader.SetUniform('VertexRect',[0,0,1,1]);
 		
