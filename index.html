@@ -1,12 +1,39 @@
 <!doctype html>
 <html>
 <head>
-<title>New Chromantics - London based Computer Vision, Virtual, Augmented and Mixed Reality developers</title>
+<title>Graham Reeves</title>
 <style type=text/css>
+
+:root
+{
+	--ShadowColour:				#000;
+	--PageBackgroundColour:		#eee;
+	--PageBackgroundColourB:	#cce;
+	--ItemBackgroundColour:		#fff;
+	--ShadowSize:				5px;
+	--ColumnSize:				380px;/*400px;*/
+}
+
+@media only screen and (max-width: 770px) 
+{
+	body
+	{
+		--ColumnSize:				600px;
+		--ShadowSize:				10px;
+		zz--PageBackgroundColour:	red;
+	}
+}
 
 body
 {
-	background-color:	#0ff;
+	background-color:	var(--PageBackgroundColour);
+
+	--ChequerBoardSize: 14px;
+	--ChequerBoardColourA: var(--PageBackgroundColour);
+	--ChequerBoardColourB: var(--PageBackgroundColourB);
+	background: repeating-conic-gradient( var(--ChequerBoardColourA) 0% 25%, var(--ChequerBoardColourB) 0% 50%) 50% / var(--ChequerBoardSize) var(--ChequerBoardSize);
+	
+	
 	color:				#000;
 	font-family:		"futura-pt",sans-serif;
 	margin:				0px;
@@ -19,6 +46,7 @@ h2
 	font-size:		30pt;
 	letter-spacing:		-2px;
 	font-weight:		600;
+	text-shadow: 		2px 2px #000;
 }
 
 a
@@ -51,30 +79,40 @@ header h1
 	clear:	both;
 }
 
-ul#Portfolio
+#Portfolio
 {
-	width:		100vw;
+	zwidth:		100vw;
+	display:	grid;
 	margin:		0px;
 	padding:	0px;
-	position:	relative;
+	grid-template-columns: repeat( auto-fill, minmax(var(--ColumnSize),auto) );
+	xjustify-items:	center;
 	list-style-type:	none;
 }
 
 
-#Portfolio li
+@media only screen and (max-width: 770px) 
 {
-	z-index:	0;
-	xbackground:	black;
-	height:		50vmin;
-	float:		left;
-	width:		33.3vw;
-	position:	relative;
-	margin:		0px;
-	
-	overflow:	hidden;
+	#Portfolio
+	{
+		grid-template-columns: 1fr;
+	}
 }
 
+#Portfolio li
+{
+	margin:		40px;
+	z-index:	0;
+	background:	var(--ItemBackgroundColour);
+	height:		var(--ColumnSize);
+	float:		left;
+	position:	relative;
+	
+	overflow:	hidden;
+	box-shadow: var(--ShadowSize) var(--ShadowSize) 0px 0px var(--ShadowColour);
+}
 
+/*
 @media only screen and (max-device-width:1024px)
 {
 	#Portfolio li
@@ -105,7 +143,7 @@ ul#Portfolio
 		width:		100vw;
 	}
 }
-
+*/
 /*	top borders */
 #Portfolio h2,
 #Portfolio img,
@@ -141,11 +179,13 @@ ul#Portfolio
 	display:			block;
 }
 
-#Portfolio img
+#Portfolio img,
+#Portfolio video
 {
-	xxmax-width:	100%;
+	object-fit: cover;
+	max-width:	100%;
 	min-width:	100%;
-	xxmax-height:	100%;
+	max-height:	100%;
 	min-height:	100%;
 	
 	
@@ -173,12 +213,24 @@ ul#Portfolio
 	padding:	2vmin;
 	position:	absolute;
 	bottom:		0px;
-	background-color:rgba(0, 255, 255, 0.8);
+	background-color: 	var(--PageBackgroundColour);
 	
+	color:	#000;
+	--ShadowSize:	4px;
+	box-shadow: var(--ShadowSize) var(--ShadowSize) 0px 0px var(--ShadowColour);
+/*
 	border-top-left-radius:		2vmin;
 	border-top-right-radius:	2vmin;
 	border-bottom-left-radius:	2vmin;
 	border-bottom-right-radius:	2vmin;
+	*/
+}
+
+#Portfolio li#NewChromantics
+{
+	min-height:	auto;
+	height:		auto;
+	max-height:	auto;
 }
 
 #Portfolio #NewChromantics p.Description
@@ -197,17 +249,101 @@ ul#Portfolio
 	<ul id=Portfolio>
 		
 		<li id=NewChromantics>
-			<h2>New Chromantics</h2>
-				<p class=Date>London</p>
-				<p class=Description>Specialist Realtime, Computer Vision, Virtual &amp; Augmented Reality developers.</p>
-				<p class=Description>Contact <a href=mailto:graham@newchromantics.com>graham@newchromantics.com</a></p>
-				<p class=Description><a href=https://twitter.com/soylentgraham>@Soylentgraham</a> on twitter.</p>
-				<p class=Description>Open source projects &amp; code <a href=https://github.com/NewChromantics>NewChromantics</a> and <a href=https://github.com/SoylentGraham/>SoylentGraham</a> on github.</p>
+			<p class=Description>Graham Reeves &amp; The New Chromantics</p>
+			<p class=Description><a href=mailto:graham@newchromantics.com>graham@newchromantics.com</a></p>
+			<p class=Description><a href=https://twitter.com/soylentgraham>@Soylentgraham</a> on twitter.</p>
+			<p class=Description><a href=https://instagram.com/soylentgraham>@Soylentgraham</a> on instagram.</p>
+			<p class=Description>Open source projects &amp; code <a href=https://github.com/NewChromantics>NewChromantics</a> and <a href=https://github.com/SoylentGraham/>SoylentGraham</a> on github.</p>
+		</li>
+		
+		<li>
+			<a href="https://www.instagram.com/p/CP9AK8EnMKE/">
+				<h2>Panopoly</h2>
+				<video src="Images/Panopoly.mp4" loop autoplay muted controls></video>
+				<p class=Date>2020-2021</p>
+				<p class=Description>Live streaming Volumetric/Holograms</p>
+			</a>
+		</li>
+		
+		<li>
+			<a href="https://www.instagram.com/p/CP9AK8EnMKE/">
+				<h2>Coca Cola</h2>
+				<img src="Images/PaintingCola3.jpg">
+				<p class=Date>June 2021</p>
+				<p class=Description>Acrylic 30x30cm</p>
+			</a>
+		</li>
+		
+		<li>
+			<a href="https://www.instagram.com/p/CPWd3ZJHfet/">
+				<h2>Lime Jelly</h2>
+				<img src="Images/PaintingJelly2.jpg">
+				<p class=Date>May 2021</p>
+				<p class=Description>Acrylic 30x40cm</p>
+			</a>
+		</li>
+		
+		
+		<li>
+			<a href="https://artsandculture.google.com/experiment/play-a-kandinsky/sgF5ivv105ukhA?hl=en">
+				<h2>Play a Kandinsky</h2>
+				<img src="Images/PlayAKandinsky.png">
+				<p class=Date>Feb 2021</p>
+				<p class=Description>Collaboration with Google Arts and The Pompedui</p>
+			</a>
+		</li>
+		
+		<li>
+			<a href="https://www.instagram.com/p/B7eOiSFFoq_/">
+				<h2>English Custard</h2>
+				<img src="Images/PaintingCustard.jpg">
+				<p class=Date>January 2020</p>
+				<p class=Description>Acrylic 30x40cm</p>
+			</a>
+		</li>
+		
+		
+		<li>
+			<a href="https://www.instagram.com/p/CAOkTocnLOP/">
+			<h2>Raymarched Nasa moon</h2>
+			<img src="Images/Moon.png">
+				<p class=Date>November 2019</p>
+				<p class=Description>NASA moon heightmap rendered in webgl with raymarching</p>
+				</a>
+		</li>
+		
+		
+		<li>
+			<a href="https://www.youtube.com/watch?v=7jfZ6zLkWF0">
+			<h2>Gorillaz X g-shock</h2>
+			<!--<img src="Images/GorillazGShock.png">-->
+			<video src="Images/GorillazGShock.mp4" loop autoplay muted controls></video>
+				<p class=Date>November 2018</p>
+				<p class=Description>Live tracking of the Gorillaz, rendered as Jamie Hewletts drawing on-set</p>
+				</a>
+		</li>
+		
+		<li>
+			<a href="http://electric.horse">
+				<h2>Electric Horse</h2>
+				<video src="Images/ElectricHorse.mp4" loop autoplay muted controls></video>
+				<p class=Date>April 2018</p>
+				<p class=Description>Webgl Nonsense</p>
+			</a>
+		</li>
+		
+		
+		<li><a href="Images/SolitaireArkit.mp4">
+			<h2>Solitaire ArKit</h2>
+			<video src="Images/SolitaireArkit.mp4" controls loop muted></video>
+				<p class=Date>March 2018</p>
+				<p class=Description>Solitaire card cascade experiment in ARKit</p>
+				</a>
 		</li>
 		
 		<li><a href=#>
 			<h2>GearVR Pointcloud</h2>
-			<img src=iteota.gif>
+			<img loading="lazy" src="iteota.gif">
 				<p class=Date>January 2017</p>
 				<p class=Description>High performance dense point cloud rendering (6m cloud, 250k on-screen) on GearVR at 60fps.</p>
 				</a>
@@ -215,7 +351,7 @@ ul#Portfolio
 		
 		<li><a href=https://www.youtube.com/watch?v=4-3SK3Eik_s>
 			<h2>Vincent Van Pop</h2>
-			<img src=vincentvanpop.gif>
+			<img loading="lazy" src=vincentvanpop.gif>
 				<p class=Date>December 2016</p>
 				<p class=Description>Experimental GPU-painting in VR (HTC Vive).</p>
 				</a>
@@ -224,7 +360,7 @@ ul#Portfolio
 	
 		<li><a href=http://analogstudio.co.uk/work/three>
 			<h2>Three commerical</h2>
-			<img src=three.gif>
+			<img loading="lazy" src=three.gif>
 			<p class=Date>June 2016</p>
 			<p class=Description>CAVE realtime, sound reactive &amp; user-controlled visuals for the background of a commerical.</p>
 			</a>
@@ -232,7 +368,7 @@ ul#Portfolio
 		
 		<li><a href=#>
 			<h2>Raymarched pointclouds</h2>
-			<img src=pointcloudraymarch.gif>
+			<img loading="lazy" src=pointcloudraymarch.gif>
 				<p class=Date>December 2015</p>
 				<p class=Description>Experimenting with rendering point clouds solidly with raymarching, using live kinect feeds.</p>
 				</a>
@@ -241,7 +377,7 @@ ul#Portfolio
 		
 		<li><a href=#>
 			<h2>PopTrack</h2>
-			<img src=poptrack.gif>
+			<img loading="lazy" src=poptrack.gif>
 				<p class=Date>August 2015</p>
 				<p class=Description>Realtime (sub 50ms) player-extraction &amp; tracking from 4K video using GPGPU/OpenCL. Ongoing project (HoloSports)</p>
 				</a>
@@ -259,7 +395,7 @@ ul#Portfolio
 
 		<li><a href=#>
 			<h2>Ball filtering</h2>
-			<img src=ballfilter.gif>
+			<img loading="lazy" src="ballfilter.gif">
 				<p class=Date>May 2015</p>
 				<p class=Description>From a kinect1 depth stream, with a little Pixel Shader computer vision I tracked a football in realtime for a CAVE project.</p>
 				</a>
@@ -267,7 +403,7 @@ ul#Portfolio
 		
 		<li><a href=http://rewind.co/portfolio/bjork-stonemilker-vr/>
 			<h2>Bj&ouml;rk: Stonemilker</h2>
-			<img src=stonemilker.gif>
+			<img loading="lazy" src="stonemilker.gif">
 				<p class=Date>April 2015</p>
 				<p class=Description>Created the app &amp; delivery of Bj&ouml;rk's Stonemilker 360 music video for MOMA with a bespoke movie player for iOS and GearVR.</p>
 				</a>
@@ -276,7 +412,7 @@ ul#Portfolio
 		
 		<li><a href=http://popmovie.xyz>
 			<h2>PopMovie</h2>
-			<img src=popmovie.jpg>
+			<img src="popmovie.jpg">
 				<p class=Date>April 2015 - 2017</p>
 				<p class=Description>Video decoder plugin for Unity, for Windows, OSX, Android, Hololens, iOS, PS4.</p>
 				</a>
@@ -284,13 +420,25 @@ ul#Portfolio
 		
 		<li><a href=#>
 			<h2>Google streetview VR Pointcloud</h2>
-			<img src=streetviewpointcloud.gif>
+			<img loading="lazy" src="streetviewpointcloud.gif">
 				<p class=Date>October 2014</p>
 				<p class=Description>For the Oculus DK2, I rendered colour &amp; depth from google streetview coordinates as a point cloud with 6DOF headtracking in webgl/three.js.</p>
 				</a>
 		</li>
 		
-		<li><a href=https://github.com/SoylentGraham/gba_hockey><img src=hockey.gif>
+		<li>
+			<a href="https://www.instagram.com/p/BtKCVSLlLJr//">
+			<h2>Sweet Chilli Mayo</h2>
+			<img src="Images/ChilliMayo.png">
+				<p class=Date>June 2012</p>
+				<p class=Description>Acrylic</p>
+				</a>
+		</li>
+		
+		
+		<li>
+			<a href=https://github.com/SoylentGraham/gba_hockey>
+			<img loading="lazy" src="hockey.gif">
 			<h2>GBA Hockey</h2>
 			<p class=Date>September 2003</p>
 			<p class=Description>Homebrew Gameboy Advance NHLPA clone, source code on github along with a ROM which works on emulators and flashable carts.</p>
