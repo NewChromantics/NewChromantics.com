@@ -160,8 +160,17 @@ uniform float LightZ;
 uniform vec3 BackgroundColourA;
 uniform vec3 BackgroundColourB;
 uniform float BackgroundRepeat;
+uniform bool RefractionIncidenceFactorialised;
 uniform float RefractionIncidencek;
-#define RefractionIncidence	(RefractionIncidencek/1000.0)
+#define RefractionIncidence	(RefractionIncidenceFactorialised?1.0/(RefractionIncidencek/1000.0):(RefractionIncidencek/1000.0))
+
+uniform float FresnelFactork;
+#define FresnelFactor	(FresnelFactork/1000.0)
+
+uniform vec3 SpecularColour;
+uniform vec3 FresnelColour;
+uniform float LiquidDensityk;
+#define LiquidDensity (LiquidDensityk/1000.0)
 
 vec3 GetBackgroundColour(vec2 Uv)
 {
@@ -174,9 +183,6 @@ vec3 GetBackgroundColour(vec2 Uv)
 	else
 		return BackgroundColourB;
 }
-
-uniform float FresnelFactork;
-#define FresnelFactor	(FresnelFactork/1000.0)
 
 float GetFresnel(vec3 eyeVector, vec3 worldNormal)
 {
@@ -224,14 +230,19 @@ void main()
 	vec3 Refraction = refract( EyeRay, Normal, RefractionIncidence );
 	float Fresnel = GetFresnel( EyeRay,Normal);
 	
-	float Specular = dot( normalize(DirToLight), normalize(Reflection) );
+	float Specular = max( 0.0, dot( normalize(DirToLight), normalize(Reflection) ) );
 	//Specular *= Specular;
 	
 	BackgroundUv += Refraction.xy;
 	BackgroundColour = GetBackgroundColour(BackgroundUv);
 
+	vec3 Colour;
+	float Density = LiquidDensity * (1.0-Specular);
+	//Colour = mix( BackgroundColour, LiquidColour, Density );
+	Colour = BackgroundColour;
+
 	//BackgroundColour = mix( BackgroundColour, vec3(1), Fresnel ); 
-	BackgroundColour += vec3(Fresnel); 
+	Colour = mix( Colour, FresnelColour, Fresnel ); 
 //Specular = Fresnel;
 
 	//	todo: work out where refraction hits background plane
@@ -239,12 +250,16 @@ void main()
 	vec3 NormalAsColour = (Normal+1.0)/2.0;
 	vec3 RefractionAsColour = (Refraction+1.0)/2.0;
 
-	if ( Specular > SpecularMinDot )
-		gl_FragColor = vec4(1);
-	else
+	//float SpecularFactor = 1.0-clamp( Range(Specular,SpecularMinDot,1.0), 0.0, 1.0 );
+	//Colour = mix( Colour, FresnelColour, SpecularFactor ); 
+	Colour = mix( Colour, SpecularColour, (Specular>SpecularMinDot)?1.0:0.0 ); 
+
+	//if ( Specular > SpecularMinDot )
+	//	gl_FragColor.xyz = FresnelColour;
+	//else
 	{
 		//gl_FragColor.xyz = vec3( max(0.0,Specular) );
-		gl_FragColor.xyz = BackgroundColour;
+		gl_FragColor.xyz = Colour;
 		//gl_FragColor.xyz = NormalAsColour;
 		//gl_FragColor.xyz = RefractionAsColour;
 	}

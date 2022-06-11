@@ -1,7 +1,12 @@
 const Params = {};
 export default Params;
 
+Params.LiquidDensityk = 0.5*1000;
+
+Params.SpecularColour = [255, 255, 255].map( x=>x/255);
+Params.FresnelColour = [210, 242, 252].map( x=>x/255);
 Params.BackgroundRepeat = 10;
+Params.RefractionIncidenceFactorialised = true;
 Params.RefractionIncidencek = 1.05*1000;
 Params.FresnelFactork = 6.1 * 1000;
 Params.LightX = -5.2 * 100;
@@ -29,6 +34,8 @@ Params.BackgroundColourB = [222, 130, 18].map( x=>x/255);
 
 export const ParamsMeta = {};
 
+
+ParamsMeta.LiquidDensityk = {min:0,max:1000};
 ParamsMeta.FresnelFactork = {min:0,max:10*1000};
 ParamsMeta.RefractionIncidencek = {min:0,max:3000};
 ParamsMeta.BackgroundRepeat = {min:1,max:1000};
