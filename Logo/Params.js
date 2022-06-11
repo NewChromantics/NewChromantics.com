@@ -13,12 +13,12 @@ Params.DebugSdfSample = false;
 
 Params.RepelPosition = [0.0,0.0];
 Params.RepelRadiusk = 0.07 * 1000;
-Params.RepelForceMink = 0.60 * 1000;
-Params.RepelForceMaxk = 1.00 * 1000;
-Params.ForceNoiseMink = 0.30 * 1000;
+Params.RepelForceMink = 1.30 * 1000;
+Params.RepelForceMaxk = 1.50 * 1000;
+Params.ForceNoiseMink = 0.50 * 1000;
 Params.ForceNoiseMaxk = 1.00 * 1000;
 Params.GravityForcePowerk = 0.0 * 1000;
-Params.DragForcePowerk = 0.40 * 1000;
+Params.DragForcePowerk = 0.25 * 1000;
 Params.SpringForcePowerk = 0.5 * 1000;
 
 Params.LiquidDensityk = 0.5*1000;
@@ -49,13 +49,13 @@ Params.BackgroundColourB = [102, 100, 93].map( x=>x/255);
 export const ParamsMeta = {};
 
 ParamsMeta.RepelRadiusk = {min:0,max:1000};
-ParamsMeta.RepelForceMink = {min:0,max:1000};
-ParamsMeta.RepelForceMaxk = {min:0,max:1000};
+ParamsMeta.RepelForceMink = {min:0,max:10*1000};
+ParamsMeta.RepelForceMaxk = {min:0,max:10*1000};
 ParamsMeta.ForceNoiseMink = {min:0,max:1000};
 ParamsMeta.ForceNoiseMaxk = {min:0,max:1000};
 ParamsMeta.GravityForcePowerk = {min:0,max:1000};
 ParamsMeta.DragForcePowerk = {min:0,max:1000};
-ParamsMeta.SpringForcePowerk = {min:0,max:90*1000};
+ParamsMeta.SpringForcePowerk = {min:0,max:10*1000};
 ParamsMeta.LiquidDensityk = {min:0,max:1000};
 ParamsMeta.FresnelFactork = {min:0,max:10*1000};
 ParamsMeta.RefractionIncidencek = {min:0,max:3000};
