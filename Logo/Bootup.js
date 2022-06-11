@@ -3,13 +3,17 @@ import {ParamsMeta} from './Params.js'
 import * as Gui from '../PopEngineCommon/PopWebGuiApi.js'
 import * as Opengl from '../PopEngineCommon/PopWebOpenglApi.js'
 import PopImage from '../PopEngineCommon/PopWebImageApi.js'
-import {CreateRandomImage} from '../PopEngineCommon/Images.js'
+import {CreateRandomImage,CreateColourTexture} from '../PopEngineCommon/Images.js'
 import {GetIndexArray} from '../PopEngineCommon/PopApi.js'
 import {Yield} from '../PopEngineCommon/PopWebApi.js'
 import {CreateBlitQuadGeometry} from '../PopEngineCommon/CommonGeometry.js'
 
 const SdfTarget = CreateRandomImage(128,128,'Float4');
-const PointPositions = CreateRandomImage(32,32,'RGBA');
+const ParticleOriginalPositions = CreateRandomImage(64,64,'Float4');
+let ParticleNextPositions = null;
+let ParticlePrevPositions = null;
+let ParticlePrevVelocitys = CreateRandomImage(64,64,'Float4');
+let ParticleNextVelocitys = null;
 SdfTarget.SetLinearFilter(true);
 //	todo: integrate this into context
 import AssetManager from '../PopEngineCommon/AssetManager.js'
@@ -26,7 +30,73 @@ let RenderShader = AssetManager.RegisterShaderAssetFilename('Logo/Render.frag.gl
 let QuadGeo = 'Quad';
 AssetManager.RegisterAssetAsyncFetchFunction(QuadGeo,GetQuadGeoBuffer);
 
+let UpdateVelocitysShader = AssetManager.RegisterShaderAssetFilename('Logo/UpdateVelocity.frag.glsl','Logo/UpdatePhysics.vert.glsl');
+let UpdatePositionsShader = AssetManager.RegisterShaderAssetFilename('Logo/UpdatePosition.frag.glsl','Logo/UpdatePhysics.vert.glsl');
 
+
+
+function UpdatePhysicsVelocitys(RenderToScreen)
+{
+	if ( ParticleNextVelocitys && ParticleNextVelocitys.OpenglVersion )
+	{
+		let x = ParticleNextVelocitys;
+		ParticleNextVelocitys = ParticlePrevVelocitys;
+		ParticlePrevVelocitys = x;
+	}
+
+	//	no buffer to render to, make one
+	if ( !ParticleNextVelocitys )
+	{
+		ParticleNextVelocitys = new PopImage();
+		//	copy dimensions, dont care about content
+		ParticleNextVelocitys.Copy( ParticlePrevVelocitys );
+	}
+
+	const Clear = ['SetRenderTarget',RenderToScreen?null:ParticleNextVelocitys,[0,1,0,1]];
+	const Uniforms = Object.assign({},Params);
+	Uniforms.LastVelocitys = ParticlePrevVelocitys;
+	Uniforms.LastPositions = ParticlePrevPositions ? ParticlePrevPositions : ParticleOriginalPositions;
+	Uniforms.OrigPositions = ParticleOriginalPositions;
+	const Draw = ['Draw',QuadGeo,UpdateVelocitysShader,Uniforms];
+
+	return [Clear,Draw];
+}
+
+function UpdatePhysicsPositions(RenderToScreen)
+{
+	if ( ParticleNextPositions && ParticleNextPositions.OpenglVersion )
+	{
+		//	flip sources (todo: explicitly AFTER rendering?)
+		let x = ParticleNextPositions;
+		ParticleNextPositions = ParticlePrevPositions;
+		ParticlePrevPositions = x;
+	}
+
+	//	no buffer to render to, make one
+	if ( !ParticleNextPositions )
+	{
+		ParticleNextPositions = new PopImage();
+		//	copy dimensions, dont care about content
+		ParticleNextPositions.Copy( ParticleOriginalPositions );
+	}
+
+	const Clear = ['SetRenderTarget',RenderToScreen?null:ParticleNextPositions,[0,1,0,1]];
+	const Uniforms = Object.assign({},Params);
+	Uniforms.LastPositions = ParticlePrevPositions ? ParticlePrevPositions : ParticleOriginalPositions;
+	Uniforms.OrigPositions = ParticleOriginalPositions;
+	Uniforms.Velocitys = ParticleNextVelocitys;
+	//Uniforms.LastPositions = ParticleOriginalPositions;
+	const Draw = ['Draw',QuadGeo,UpdatePositionsShader,Uniforms];
+
+	return [Clear,Draw];
+}
+
+function UpdatePhysics(RenderToScreen)
+{
+	const VelocityUpdate = UpdatePhysicsVelocitys();
+	const PositionUpdate = UpdatePhysicsPositions();
+	return [...VelocityUpdate,...PositionUpdate];
+}
 
 async function UpdateSdf(RenderToScreen)
 {
@@ -34,11 +104,12 @@ async function UpdateSdf(RenderToScreen)
 	
 	//	render points
 	const Uniforms = Object.assign({},Params);
-	Uniforms.ParticlePositions = PointPositions;
-	Uniforms.ParticlePositionsWidth = PointPositions.GetWidth();
-	Uniforms.ParticlePositionsHeight = PointPositions.GetHeight();
+	const PositionsTexture = ParticleNextPositions || ParticleOriginalPositions;
+	Uniforms.ParticlePositions = PositionsTexture;
+	Uniforms.ParticlePositionsWidth = PositionsTexture.GetWidth();
+	Uniforms.ParticlePositionsHeight = PositionsTexture.GetHeight();
 	
-	Uniforms.ParticleIndex = GetIndexArray( PointPositions.GetWidth()*PointPositions.GetHeight() );
+	Uniforms.ParticleIndex = GetIndexArray( PositionsTexture.GetWidth()*PositionsTexture.GetHeight() );
 	const State = {};
 	State.BlendMode = 'Min';
 	
@@ -65,10 +136,13 @@ async function GetRenderLogoCommands()
 async function GetRenderCommands()
 {
 	const Commands = [];
+	
+	//const PhysicsCommands = UpdatePhysics( Params.DebugPhysics );
 	const SdfCommands = await UpdateSdf( Params.DebugSdf );
 	const RenderCommands = await GetRenderLogoCommands();
+	//Commands.push( ...PhysicsCommands );
 	Commands.push( ...SdfCommands );
-	if ( !Params.DebugSdf )
+	if ( !Params.DebugSdf && !Params.DebugPhysics )
 		Commands.push( ...RenderCommands );
 	
 	return Commands;
@@ -93,9 +167,23 @@ function ResovleCommandAssets(Commands,Context)
 	Commands.forEach( ResolveCommand );
 }
 
+function OnMouseMove(x,y,Button)
+{
+	const RenderView = this;
+	const Rect = RenderView.GetScreenRect();
+	//console.log(`OnMouseMove`,...arguments);
+	const u = x / Rect[2];
+	let v = y / Rect[3];
+	v = 1-v;
+	Params.RepelPosition = [u,v];
+}
+
 async function RenderThread()
 {
 	const RenderView = new Gui.RenderView(null,'Logo');
+	
+	RenderView.OnMouseMove = OnMouseMove.bind(RenderView);
+	
 	const RenderContext = new Opengl.Context(RenderView);
 	while ( RenderView )
 	{
@@ -130,7 +218,7 @@ function InitParamsGui()
 	ParamsTree.Element.meta = ParamsMeta;
 	ParamsTree.Element.json = Params;
 	
-	function OnParamsChanged(NewParams)
+	function OnParamsChanged(NewParams,Change)
 	{
 		Object.assign(Params,NewParams);
 	}
