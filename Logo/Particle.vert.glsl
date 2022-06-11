@@ -8,9 +8,7 @@ uniform int ParticlePositionsWidth;
 uniform int ParticlePositionsHeight;
 //uniform sampler2D Velocitys;
 
-uniform float LocalScalek;
 uniform float WorldScalek;
-#define LocalScale	(LocalScalek/1000.0)
 #define WorldScale	(WorldScalek/1000.0)
 
 varying vec2 FragUv;
@@ -41,7 +39,6 @@ void main()
 	vec2 ParticlePosition = GetParticlePosition(LocalParticleRadius) * (WorldScale);
 
 	WorldParticleRadius = mix( MinParticleRadius, MaxParticleRadius, LocalParticleRadius );
-	WorldParticleRadius *= LocalScale;
 	
 	vec2 LocalPosition = mix( vec2(-1), vec2(1), LocalUv );
 	vec2 VertexPosition = LocalPosition * WorldParticleRadius;

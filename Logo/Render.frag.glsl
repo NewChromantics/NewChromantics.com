@@ -159,7 +159,8 @@ uniform float LightZ;
 
 uniform vec3 BackgroundColourA;
 uniform vec3 BackgroundColourB;
-uniform float BackgroundRepeat;
+uniform float BackgroundChequerRepeat;
+uniform float BackgroundRingRepeat;
 uniform bool RefractionIncidenceFactorialised;
 uniform float RefractionIncidencek;
 #define RefractionIncidence	(RefractionIncidenceFactorialised?1.0/(RefractionIncidencek/1000.0):(RefractionIncidencek/1000.0))
@@ -172,16 +173,36 @@ uniform vec3 FresnelColour;
 uniform float LiquidDensityk;
 #define LiquidDensity (LiquidDensityk/1000.0)
 
+uniform float TimeSecs;
+uniform float BackgroundTimeScalek;
+#define BackgroundTimeScale	(BackgroundTimeScalek/1000.0)
+
 vec3 GetBackgroundColour(vec2 Uv)
 {
-	Uv *= vec2(BackgroundRepeat);
-	Uv = fract(Uv);
-	bool a = Uv.x < 0.5;
-	bool b = Uv.y < 0.5;
-	if ( a==b )
+	Uv -= vec2(0.5);
+
+	vec2 Chequer = Uv * vec2(BackgroundChequerRepeat);
+	Chequer = fract(Chequer);
+	bool a = Chequer.x < 0.5;
+	bool b = Chequer.y < 0.5;
+	bool AltColour = a==b;
+	/*
+	if ( AltColour )
 		return BackgroundColourA;
 	else
 		return BackgroundColourB;
+	*/
+	
+	//	radial
+	float Time = length(Uv) * (BackgroundRingRepeat/10.0);
+	Time -= TimeSecs*BackgroundTimeScale;
+	Time = fract(Time);
+	bool t = Time < 0.5;
+	if ( t == AltColour )
+		return BackgroundColourA;
+	else
+		return BackgroundColourB;
+	
 }
 
 float GetFresnel(vec3 eyeVector, vec3 worldNormal)

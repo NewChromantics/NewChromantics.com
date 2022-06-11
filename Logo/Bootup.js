@@ -9,10 +9,10 @@ import {Yield} from '../PopEngineCommon/PopWebApi.js'
 import {CreateBlitQuadGeometry} from '../PopEngineCommon/CommonGeometry.js'
 
 const SdfTarget = CreateRandomImage(128,128,'Float4');
-const ParticleOriginalPositions = CreateRandomImage(64,64,'Float4');
+const ParticleOriginalPositions = CreateRandomImage(32,32,'Float4');
 let ParticleNextPositions = null;
 let ParticlePrevPositions = null;
-let ParticlePrevVelocitys = CreateRandomImage(64,64,'Float4');
+let ParticlePrevVelocitys = CreateRandomImage(ParticleOriginalPositions.GetWidth(),ParticleOriginalPositions.GetHeight(),'Float4');
 let ParticleNextVelocitys = null;
 SdfTarget.SetLinearFilter(true);
 //	todo: integrate this into context
@@ -118,7 +118,7 @@ async function UpdateSdf(RenderToScreen)
 	return [Clear,Draw];
 }
 
-
+import {GetTimeNowMs} from '../PopEngineCommon/PopWebApiCore.js';
 async function GetRenderLogoCommands()
 {
 	const Clear = ['SetRenderTarget',null,[0,1,0,1]];
@@ -127,6 +127,9 @@ async function GetRenderLogoCommands()
 	const Uniforms = Object.assign({},Params);
 	Uniforms.SdfPointsTexture = SdfTarget;
 	Uniforms.SdfPointsTextureSize = [SdfTarget.GetWidth(),SdfTarget.GetHeight()];
+	
+	Uniforms.TimeSecs = GetTimeNowMs() / 1000.0;
+	
 	const Draw = ['Draw',QuadGeo,RenderShader,Uniforms];
 	
 	return [Clear,Draw];
@@ -137,10 +140,10 @@ async function GetRenderCommands()
 {
 	const Commands = [];
 	
-	//const PhysicsCommands = UpdatePhysics( Params.DebugPhysics );
+	const PhysicsCommands = UpdatePhysics( Params.DebugPhysics );
 	const SdfCommands = await UpdateSdf( Params.DebugSdf );
 	const RenderCommands = await GetRenderLogoCommands();
-	//Commands.push( ...PhysicsCommands );
+	Commands.push( ...PhysicsCommands );
 	Commands.push( ...SdfCommands );
 	if ( !Params.DebugSdf && !Params.DebugPhysics )
 		Commands.push( ...RenderCommands );
