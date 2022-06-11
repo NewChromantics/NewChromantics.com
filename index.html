@@ -3,6 +3,8 @@
 <head>
 	<title>The New Chromantics</title>
 	<link rel="stylesheet" type="text/css" href="Logo/Editor_win95.css" />
+<script src="./PopEngineCommon/WebComponent_TreeView/TreeView.js" type=module></script>
+
 <style>
 	/* disable scrolling on ios
 	 https://stackoverflow.com/a/57489918/355753
@@ -46,7 +48,12 @@ a, a:active, a:visited
 }
 
 
-
+tree-view
+{
+	display:block;
+	min-height:	10em;
+	min-width:10em;
+}
 
 </style>
 </head>
@@ -55,30 +62,11 @@ a, a:active, a:visited
 	<div id="Content">
 		<a href=mailto:hello@newchromantics.com>hello@newchromantics.com</a>
 	</div>
-
-	<script src='PopEngineCommon/PopWebApi.js'></script>
-	<script src='PopEngineCommon/PopApi.js'></script>
-	<script src='PopEngineCommon/PopWebOpenglApi.js'></script>
-	<script src='PopEngineCommon/PopWebGuiApi.js'></script>
-	<script src='PopEngineCommon/PopWebImageApi.js'></script>
-	<script src='PopEngineCommon/PopWebSocketApi.js'></script>
-	<script xxxsrc='PopEngineCommon/PopWebXrApi.js'></script>
-
-	<!-- engine normally loads these in-code -->
-	<script src='PopEngineCommon/PopMath.js'></script>
-	<script src='PopEngineCommon/PopCamera.js'></script>
-	<script src='PopEngineCommon/PopShaderCache.js'></script>
-	<script src='PopEngineCommon/ParamsWindow.js'></script>
-	<script src='PopEngineCommon/PopFrameCounter.js'></script>
-	<script src='PopEngineCommon/PopSvg.js'></script>
-	<script src='PopEngineCommon/PopGuiTimeline.js'></script>
-	<script src='PopEngineCommon/PopGuiRenderTimeline.js'></script>
-	<script src='Logo/AssetManager.js'></script>
-	<script src='Logo/AssetCommon.js'></script>
-	<script src='Logo/Bootup.js'></script>
-	
-	
-	
+	<tree-view id="Params" css="./PopEngineCommon/WebComponent_TreeView/TreeView.css"></tree-view>
+<script type=module>
+import Bootup from './Logo/Bootup.js'
+Bootup();
+</script>
 	
 	
 </body>
