@@ -18,6 +18,8 @@ varying vec2 FragWorldPosition;
 varying vec2 FragParticlePosition;
 varying float WorldParticleRadius;
 uniform float ParticleRadius;
+#define MinParticleRadius	(0.0)
+#define MaxParticleRadius	(ParticleRadius/1000.0)
 
 vec2 GetParticlePosition(out float Radius)
 {
@@ -33,8 +35,6 @@ vec2 GetParticlePosition(out float Radius)
 	return ParticleData.xy;
 }
 
-#define MinParticleRadius	(0.0)
-#define MaxParticleRadius	(ParticleRadius/1000.0)
 void main()
 {
 	float LocalParticleRadius = 0.0;

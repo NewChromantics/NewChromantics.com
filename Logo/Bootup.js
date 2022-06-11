@@ -8,9 +8,9 @@ import {GetIndexArray} from '../PopEngineCommon/PopApi.js'
 import {Yield} from '../PopEngineCommon/PopWebApi.js'
 import {CreateBlitQuadGeometry} from '../PopEngineCommon/CommonGeometry.js'
 
-const SdfTarget = CreateRandomImage(512,512,'RGBA');
+const SdfTarget = CreateRandomImage(128,128,'Float4');
 const PointPositions = CreateRandomImage(32,32,'RGBA');
-
+SdfTarget.SetLinearFilter(true);
 //	todo: integrate this into context
 import AssetManager from '../PopEngineCommon/AssetManager.js'
 
@@ -22,15 +22,15 @@ async function GetQuadGeoBuffer(RenderContext)
 }
 
 let ParticleShader = AssetManager.RegisterShaderAssetFilename('Logo/Particle.frag.glsl','Logo/Particle.vert.glsl');
+let RenderShader = AssetManager.RegisterShaderAssetFilename('Logo/Render.frag.glsl','Logo/Render.vert.glsl');
 let QuadGeo = 'Quad';
 AssetManager.RegisterAssetAsyncFetchFunction(QuadGeo,GetQuadGeoBuffer);
 
 
 
-async function UpdateSdf()
+async function UpdateSdf(RenderToScreen)
 {
-	//const Clear = ['SetRenderTarget',SdfTarget,[1,0,0,1]];
-	const Clear = ['SetRenderTarget',null,[1,0,0,1]];
+	const Clear = ['SetRenderTarget',RenderToScreen?null:SdfTarget,[1,0,0,1]];
 	
 	//	render points
 	const Uniforms = Object.assign({},Params);
@@ -47,11 +47,29 @@ async function UpdateSdf()
 	return [Clear,Draw];
 }
 
+
+async function GetRenderLogoCommands()
+{
+	const Clear = ['SetRenderTarget',null,[0,1,0,1]];
+	
+	//	render points
+	const Uniforms = Object.assign({},Params);
+	Uniforms.SdfPointsTexture = SdfTarget;
+	Uniforms.SdfPointsTextureSize = [SdfTarget.GetWidth(),SdfTarget.GetHeight()];
+	const Draw = ['Draw',QuadGeo,RenderShader,Uniforms];
+	
+	return [Clear,Draw];
+}
+
+
 async function GetRenderCommands()
 {
 	const Commands = [];
-	const SdfCommands = await UpdateSdf();
+	const SdfCommands = await UpdateSdf( Params.DebugSdf );
+	const RenderCommands = await GetRenderLogoCommands();
 	Commands.push( ...SdfCommands );
+	if ( !Params.DebugSdf )
+		Commands.push( ...RenderCommands );
 	
 	return Commands;
 }
