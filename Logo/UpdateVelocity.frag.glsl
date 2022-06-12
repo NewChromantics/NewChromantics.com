@@ -41,11 +41,11 @@ void main()
 	//	spring
 	{
 		vec2 Target = texture2D( OrigPositions, uv ).xy;
-		vec2 SpringForce = (Target - Pos.xy) * SpringForcePower*Noise.y;
+		vec2 SpringForce = (Target - Pos.xy) * SpringForcePower;
 		Vel.xy += SpringForce;
 	}
 
-	//	repel spring
+	//	repel
 	{
 		vec2 RepelForce = -1.0 * (RepelPosition - Pos.xy);
 		float RepelDistance = length( RepelForce );

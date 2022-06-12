@@ -4,15 +4,19 @@ import * as Gui from '../PopEngineCommon/PopWebGuiApi.js'
 import * as Opengl from '../PopEngineCommon/PopWebOpenglApi.js'
 import PopImage from '../PopEngineCommon/PopWebImageApi.js'
 import {CreateRandomImage,CreateColourTexture} from '../PopEngineCommon/Images.js'
-import {GetIndexArray} from '../PopEngineCommon/PopApi.js'
+import {GetIndexArray,GetZeroFloatArray} from '../PopEngineCommon/PopApi.js'
 import {Yield} from '../PopEngineCommon/PopWebApi.js'
 import {CreateBlitQuadGeometry} from '../PopEngineCommon/CommonGeometry.js'
+import {LoadFileAsStringAsync} from '../PopEngineCommon/FileSystem.js'
+import {GetTimeNowMs} from '../PopEngineCommon/PopWebApiCore.js';
+import ParseSvg from '../PopEngineCommon/PopSvg.js';
+import {GetNextPowerOf2} from '../PopEngineCommon/Math.js'
 
-const SdfTarget = CreateRandomImage(128,128,'Float4');
-const ParticleOriginalPositions = CreateRandomImage(32,32,'Float4');
+const SdfTarget = CreateRandomImage(256,256,'Float4');
+let ParticleOriginalPositions = null;//CreateRandomImage(32,32,'Float4');
 let ParticleNextPositions = null;
 let ParticlePrevPositions = null;
-let ParticlePrevVelocitys = CreateRandomImage(ParticleOriginalPositions.GetWidth(),ParticleOriginalPositions.GetHeight(),'Float4');
+let ParticlePrevVelocitys = null;//CreateRandomImage(ParticleOriginalPositions.GetWidth(),ParticleOriginalPositions.GetHeight(),'Float4');
 let ParticleNextVelocitys = null;
 SdfTarget.SetLinearFilter(true);
 //	todo: integrate this into context
@@ -93,6 +97,9 @@ function UpdatePhysicsPositions(RenderToScreen)
 
 function UpdatePhysics(RenderToScreen)
 {
+	if ( !ParticleOriginalPositions )
+		return [];
+		
 	const VelocityUpdate = UpdatePhysicsVelocitys();
 	const PositionUpdate = UpdatePhysicsPositions();
 	return [...VelocityUpdate,...PositionUpdate];
@@ -102,23 +109,26 @@ async function UpdateSdf(RenderToScreen)
 {
 	const Clear = ['SetRenderTarget',RenderToScreen?null:SdfTarget,[1,0,0,1]];
 	
-	//	render points
-	const Uniforms = Object.assign({},Params);
+	let Draw;
 	const PositionsTexture = ParticleNextPositions || ParticleOriginalPositions;
-	Uniforms.ParticlePositions = PositionsTexture;
-	Uniforms.ParticlePositionsWidth = PositionsTexture.GetWidth();
-	Uniforms.ParticlePositionsHeight = PositionsTexture.GetHeight();
-	
-	Uniforms.ParticleIndex = GetIndexArray( PositionsTexture.GetWidth()*PositionsTexture.GetHeight() );
-	const State = {};
-	State.BlendMode = 'Min';
-	
-	const Draw = ['Draw',QuadGeo,ParticleShader,Uniforms,State];
+	if ( PositionsTexture )
+	{
+		//	render points
+		const Uniforms = Object.assign({},Params);
+		Uniforms.ParticlePositions = PositionsTexture;
+		Uniforms.ParticlePositionsWidth = PositionsTexture.GetWidth();
+		Uniforms.ParticlePositionsHeight = PositionsTexture.GetHeight();
+		
+		Uniforms.ParticleIndex = GetIndexArray( PositionsTexture.GetWidth()*PositionsTexture.GetHeight() );
+		const State = {};
+		State.BlendMode = 'Min';
+		
+		Draw = ['Draw',QuadGeo,ParticleShader,Uniforms,State];
+	}
 	
 	return [Clear,Draw];
 }
 
-import {GetTimeNowMs} from '../PopEngineCommon/PopWebApiCore.js';
 async function GetRenderLogoCommands()
 {
 	const Clear = ['SetRenderTarget',null,[0,1,0,1]];
@@ -158,7 +168,7 @@ function ResovleCommandAssets(Commands,Context)
 {
 	function ResolveCommand(Command)
 	{
-		if ( Command[0] == 'Draw' )
+		if ( Command && Command[0] == 'Draw' )
 		{
 			//	geo
 			Command[1] = AssetManager.GetAsset( Command[1], Context );
@@ -228,8 +238,57 @@ function InitParamsGui()
 	ParamsTree.Element.onchange = OnParamsChanged;
 }
 
+async function LoadParticlePositions()
+{
+	const SvgFileContents = await LoadFileAsStringAsync('Logo/Logo.svg');
+	
+	function ModifyPosition(Xy,DocumentBounds)
+	{
+		Xy[0] = Xy[0] / DocumentBounds[2];
+		Xy[1] = Xy[1] / DocumentBounds[3];
+		Xy[1] = 1 - Xy[1];
+		return Xy;
+	}
+	
+	let Positions = [];
+	function EnumShape(Shape)
+	{
+		if ( Shape.Circle )
+		{
+			let Radius = Shape.Circle.Radius;
+			let Noise = Math.random();
+			Positions.push( Shape.Circle.x, Shape.Circle.y, Radius, Noise );
+		}
+		else
+			console.log(Shape);
+	}
+	ParseSvg( SvgFileContents, EnumShape, ModifyPosition );
+
+	Positions = Positions.flat(2);
+
+	//	make square
+	const Channels = 4;
+	let PositionCount = Positions.length / Channels;
+	let Width = GetNextPowerOf2( Math.sqrt(PositionCount) );
+	let Height = Width;
+	
+	//	pad	
+	let Positionsf = new Float32Array( Width * Height * Channels );
+	Positionsf.set( Positions );
+
+	//	turn positions into points
+	ParticleOriginalPositions = new PopImage();
+	ParticleOriginalPositions.WritePixels( Width, Height, Positionsf, 'Float4' );
+	
+	
+	ParticlePrevVelocitys = new PopImage();
+	const Zeros = GetZeroFloatArray( Width*Height*Channels);
+	ParticlePrevVelocitys.WritePixels( Width, Height, Zeros, 'Float4' );
+}
+
 export default async function Bootup()
 {
+	LoadParticlePositions();
 	InitParamsGui();
 	RenderThread();
 	

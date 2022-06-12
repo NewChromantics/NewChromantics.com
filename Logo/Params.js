@@ -1,13 +1,13 @@
 const Params = {};
 export default Params;
 
-Params.ChromaOffsetk = 3;
+Params.ChromaOffsetk = 2;
 
 Params.BackgroundChequerRepeat = 5;
 Params.BackgroundRingRepeat = 100;
 Params.BackgroundTimeScalek = 0.3 * 1000;
 
-Params.ParticleRadiusk = 99;
+Params.ParticleRadiusk = 45;
 Params.WorldScalek = 1000;
 Params.DebugSdf = false;
 Params.DebugSdfSample = false;
@@ -15,13 +15,13 @@ Params.DebugSdfSample = false;
 
 Params.RepelPosition = [0.0,0.0];
 Params.RepelRadiusk = 0.07 * 1000;
-Params.RepelForceMink = 440;
+Params.RepelForceMink = 340;
 Params.RepelForceMaxk = 560;
-Params.ForceNoiseMink = 360;
-Params.ForceNoiseMaxk = 670;
+Params.ForceNoiseMink = 600;
+Params.ForceNoiseMaxk = 900;
 Params.GravityForcePowerk = 0.0 * 1000;
-Params.DragForcePowerk = 0.25 * 1000;
-Params.SpringForcePowerk = 0.5 * 1000;
+Params.DragForcePowerk = 0.20 * 1000;
+Params.SpringForcePowerk = 0.4 * 1000;
 
 Params.LiquidDensityk = 0.5*1000;
 Params.SpecularColour = [255, 255, 255].map( x=>x/255);
@@ -32,15 +32,15 @@ Params.FresnelFactork = 6.1 * 1000;
 Params.LightX = -5.2 * 100;
 Params.LightY = 7.8 * 100;
 Params.LightZ = 6.5 * 100;
-Params.SdfParticleDistancePow = 1*10;
-Params.RenderParticleDistancePow = 5*10;
-Params.SpecularMinDotk = 900;
-Params.BlurSigmak = 5*1000;
-Params.SampleWeightSigma = 1;
-Params.NormalSampleStepk = 1;
-Params.SdfMinRadiusk = 37;
-Params.SdfMaxRadiusk = 906;
-Params.SdfClipRadiusk = 532;
+Params.SdfParticleDistancePow = 11;
+Params.RenderParticleDistancePow = 55;
+Params.SpecularMinDotk = 700;
+Params.BlurSigmak = 6400;
+Params.SampleWeightSigma = 2;
+Params.NormalSampleStepk = 6;
+Params.SdfMinRadiusk = 0;
+Params.SdfMaxRadiusk = 830;
+Params.SdfClipRadiusk = 464;
 
 Params.DebugPhysics = false;
 Params.BackgroundColourA = [227, 223, 211].map( x=>x/255);
@@ -75,7 +75,7 @@ ParamsMeta.NormalSampleStepk = {min:0,max:10};
 ParamsMeta.SdfMinRadiusk = {min:0,max:1000};
 ParamsMeta.SdfMaxRadiusk = {min:0,max:1000};
 ParamsMeta.SdfClipRadiusk = {min:0,max:1000};
-ParamsMeta.ParticleRadiusk = {min:0,max:1000};
+ParamsMeta.ParticleRadiusk = {min:0,max:100};
 ParamsMeta.WorldScalek = {min:0,max:1000};
 ParamsMeta.BackgroundTimeScalek = {min:0,max:1000};
 
