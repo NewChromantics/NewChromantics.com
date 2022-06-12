@@ -210,28 +210,14 @@ float GetFresnel(vec3 eyeVector, vec3 worldNormal)
 	return pow( 1.0 + dot( eyeVector, worldNormal), FresnelFactor );
 }
 
-void main()
-{
-	//	visualise sdf
-	float Distance = GetDistance(FragUv);
-	if ( DebugSdfSample )
-	{
-		vec3 Rgb = vec3(0,1,0);
-		if ( Distance < 0.0 )
-			Rgb = vec3(1,0,0);
-		float Sub = fract(Distance*20.0);
-		Sub = Sub < 0.5 ? 0.0 : 1.0;
-		Rgb *= Sub;
-		gl_FragColor = vec4( Rgb, 1.0 );
-		return;
-	}
 
-	vec2 BackgroundUv = FragUv;
-	vec3 BackgroundColour = GetBackgroundColour(BackgroundUv);
+void Trace(vec2 ScreenUv,out vec2 BackgroundUv,out float Specular)
+{
+	BackgroundUv = ScreenUv;
 	vec4 Pos = GetPosition(vec2(0));
 	if ( Pos.w <= 0.0 )
 	{
-		gl_FragColor = vec4( BackgroundColour, 1.0);
+		Specular = 0.0;
 		return;
 	}
 	
@@ -251,61 +237,49 @@ void main()
 	vec3 Refraction = refract( EyeRay, Normal, RefractionIncidence );
 	float Fresnel = GetFresnel( EyeRay,Normal);
 	
-	float Specular = max( 0.0, dot( normalize(DirToLight), normalize(Reflection) ) );
+	Specular = max( 0.0, dot( normalize(DirToLight), normalize(Reflection) ) );
 	//Specular *= Specular;
 	
 	BackgroundUv += Refraction.xy;
-	BackgroundColour = GetBackgroundColour(BackgroundUv);
 
-	vec3 Colour;
-	float Density = LiquidDensity * (1.0-Specular);
+	//float Density = LiquidDensity * (1.0-Specular);
 	//Colour = mix( BackgroundColour, LiquidColour, Density );
-	Colour = BackgroundColour;
+	//Colour = BackgroundColour;
 
-	//BackgroundColour = mix( BackgroundColour, vec3(1), Fresnel ); 
-	Colour = mix( Colour, FresnelColour, Fresnel ); 
-//Specular = Fresnel;
-
-	//	todo: work out where refraction hits background plane
-
-	vec3 NormalAsColour = (Normal+1.0)/2.0;
-	vec3 RefractionAsColour = (Refraction+1.0)/2.0;
-
+	Specular = (Specular>SpecularMinDot) ? 1.0 : 0.0;
 	//float SpecularFactor = 1.0-clamp( Range(Specular,SpecularMinDot,1.0), 0.0, 1.0 );
-	//Colour = mix( Colour, FresnelColour, SpecularFactor ); 
-	Colour = mix( Colour, SpecularColour, (Specular>SpecularMinDot)?1.0:0.0 ); 
+	
+	Specular = max( Specular, Fresnel );
+}
 
-	//if ( Specular > SpecularMinDot )
-	//	gl_FragColor.xyz = FresnelColour;
-	//else
+
+void main()
+{
+	//	visualise sdf
+	float Distance = GetDistance(FragUv);
+	if ( DebugSdfSample )
 	{
-		//gl_FragColor.xyz = vec3( max(0.0,Specular) );
-		gl_FragColor.xyz = Colour;
-		//gl_FragColor.xyz = NormalAsColour;
-		//gl_FragColor.xyz = RefractionAsColour;
+		vec3 Rgb = vec3(0,1,0);
+		if ( Distance < 0.0 )
+			Rgb = vec3(1,0,0);
+		float Sub = fract(Distance*20.0);
+		Sub = Sub < 0.5 ? 0.0 : 1.0;
+		Rgb *= Sub;
+		gl_FragColor = vec4( Rgb, 1.0 );
+		return;
 	}
-	
-	//if ( v0.z == v1.z && v1.z == v2.z )	gl_FragColor.xyz = vec3(1,0,0);
 
+	vec2 BackgroundPlaneUv;
+	float Specular;
+	Trace( FragUv,BackgroundPlaneUv,Specular);
+
+	vec3 BackgroundColour = GetBackgroundColour(BackgroundPlaneUv);
+	vec3 Colour = BackgroundColour;
+
+	Colour = mix( Colour, SpecularColour, Specular ); 
+
+
+	gl_FragColor.xyz = Colour;
 	gl_FragColor.w =1.0;
-	//gl_FragColor = Pos4;
-	//gl_FragColor = vec4( Normal, 1.0 );
-	//gl_FragColor = vec4( Normal.zzz, 1.0 );
-	//gl_FragColor = Pos.zzzw;
-	/*
-	float Distance = texture2D( SdfPointsTexture, FragUv ).x;
-	
-	if ( Distance > SdfMaxRadius )
-		discard;
-	
-	Distance = Range( SdfMinRadius, SdfMaxRadius, Distance );
-	
-	//	convert to 3d 
-	//	calculate normal from samples
-	//vec3 Rgb = vec3(Distance);
-	vec3 Rgb = (Distance <= SdfMinRadius) ? vec3(0) : vec3(1);
-	
-	gl_FragColor = vec4( Rgb, 1.0 );
-	*/
 }
 
