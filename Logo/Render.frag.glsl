@@ -92,10 +92,10 @@ float GetDistance(vec2 Uv)
 
 //	turn sdf value into 3d position
 //	w = validity (could be "floor=0" and we cold just use z)
-vec4 GetPosition(vec2 PxOffset)
+vec4 GetPosition(vec2 ScreenUv,vec2 PxOffset)
 {
 	//	assume a flat top (UP), so the rim curves down to RIGHT
-	vec2 xy = FragUv + (PxOffset / SdfPointsTextureSize);
+	vec2 xy = ScreenUv + (PxOffset / SdfPointsTextureSize);
 	float Distance = GetDistance(xy);
 	
 	bool Valid = true;
@@ -177,6 +177,15 @@ uniform float TimeSecs;
 uniform float BackgroundTimeScalek;
 #define BackgroundTimeScale	(BackgroundTimeScalek/1000.0)
 
+uniform float ChromaOffsetk;
+#define ChromaOffsetX	(ChromaOffsetk/1000.0)
+#define ChromaOffsetY	(ChromaOffsetk/1000.0)
+#define RedOffsetX	(-ChromaOffsetX)
+#define RedOffsetY	(-ChromaOffsetY)
+#define BlueOffsetX	(ChromaOffsetX)
+#define BlueOffsetY	(ChromaOffsetY)
+
+
 vec3 GetBackgroundColour(vec2 Uv)
 {
 	Uv -= vec2(0.5);
@@ -211,28 +220,33 @@ float GetFresnel(vec3 eyeVector, vec3 worldNormal)
 }
 
 
-void Trace(vec2 ScreenUv,out vec2 BackgroundUv,out float Specular)
+void Trace(vec2 ScreenUv,vec2 ScreenOffsetUv,out vec2 BackgroundUv,out float Specular)
 {
 	BackgroundUv = ScreenUv;
-	vec4 Pos = GetPosition(vec2(0));
+	vec4 Pos = GetPosition(ScreenUv,vec2(0));
 	if ( Pos.w <= 0.0 )
 	{
 		Specular = 0.0;
+		
 		return;
 	}
 	
-		
+	//	only apply chromatic offset for reflections & refractions
+	//	via normal
+	vec2 NormalSampleUv = ScreenUv + ScreenOffsetUv;
+	
 	//	calcnormal
-	vec3 v0 = GetPosition( vec2(-1,-1) ).xyz;
-	vec3 v1 = GetPosition( vec2(1,-1) ).xyz;
-	vec3 v2 = GetPosition( vec2(0.0,1) ).xyz;
+	vec3 v0 = GetPosition( NormalSampleUv, vec2(-1,-1) ).xyz;
+	vec3 v1 = GetPosition( NormalSampleUv, vec2(1,-1) ).xyz;
+	vec3 v2 = GetPosition( NormalSampleUv, vec2(0.0,1) ).xyz;
 	vec3 Normal = normalize(cross(v1-v0, v2-v0));
 	if ( v0.z == v1.z && v1.z == v2.z )
 		Normal = vec3(0,0,1);
 
 	vec3 DirToLight = normalize(LightPos - Pos.xyz);
 
-	vec3 EyeRay = vec3(0,0,-1);
+	//	could offset eye ray too?
+	vec3 EyeRay = vec3(ScreenOffsetUv,-1);
 	vec3 Reflection = reflect( EyeRay, Normal );
 	vec3 Refraction = refract( EyeRay, Normal, RefractionIncidence );
 	float Fresnel = GetFresnel( EyeRay,Normal);
@@ -269,14 +283,33 @@ void main()
 		return;
 	}
 
-	vec2 BackgroundPlaneUv;
-	float Specular;
-	Trace( FragUv,BackgroundPlaneUv,Specular);
 
-	vec3 BackgroundColour = GetBackgroundColour(BackgroundPlaneUv);
-	vec3 Colour = BackgroundColour;
+	vec2 RedOffset = vec2( RedOffsetX,RedOffsetY);
+	vec2 GreenOffset = vec2(0.0,0.0);
+	vec2 BlueOffset = vec2(BlueOffsetX,BlueOffsetY);
+	vec2 RedBackgroundUv;
+	vec2 GreenBackgroundUv;
+	vec2 BlueBackgroundUv;
+	float RedSpecular;
+	float GreenSpecular;
+	float BlueSpecular;
+	Trace( FragUv, RedOffset,RedBackgroundUv,RedSpecular);
+	Trace( FragUv, GreenOffset,GreenBackgroundUv,GreenSpecular);
+	Trace( FragUv, BlueOffset,BlueBackgroundUv,BlueSpecular);
 
-	Colour = mix( Colour, SpecularColour, Specular ); 
+	vec3 RedBackgroundColour = GetBackgroundColour(RedBackgroundUv);
+	vec3 GreenBackgroundColour = GetBackgroundColour(GreenBackgroundUv);
+	vec3 BlueBackgroundColour = GetBackgroundColour(BlueBackgroundUv);
+
+	RedBackgroundColour = mix( RedBackgroundColour, SpecularColour, RedSpecular ); 
+	GreenBackgroundColour = mix( GreenBackgroundColour, SpecularColour, GreenSpecular ); 
+	BlueBackgroundColour = mix( BlueBackgroundColour, SpecularColour, BlueSpecular ); 
+
+	vec3 Colour;
+	Colour.x = RedBackgroundColour.x;
+	Colour.y = GreenBackgroundColour.y;
+	Colour.z = BlueBackgroundColour.z;
+
 
 
 	gl_FragColor.xyz = Colour;

@@ -1,6 +1,8 @@
 const Params = {};
 export default Params;
 
+Params.ChromaOffsetk = 3;
+
 Params.BackgroundChequerRepeat = 5;
 Params.BackgroundRingRepeat = 100;
 Params.BackgroundTimeScalek = 0.3 * 1000;
@@ -13,10 +15,10 @@ Params.DebugSdfSample = false;
 
 Params.RepelPosition = [0.0,0.0];
 Params.RepelRadiusk = 0.07 * 1000;
-Params.RepelForceMink = 1.30 * 1000;
-Params.RepelForceMaxk = 1.50 * 1000;
-Params.ForceNoiseMink = 0.50 * 1000;
-Params.ForceNoiseMaxk = 1.00 * 1000;
+Params.RepelForceMink = 440;
+Params.RepelForceMaxk = 560;
+Params.ForceNoiseMink = 360;
+Params.ForceNoiseMaxk = 670;
 Params.GravityForcePowerk = 0.0 * 1000;
 Params.DragForcePowerk = 0.25 * 1000;
 Params.SpringForcePowerk = 0.5 * 1000;
@@ -59,8 +61,8 @@ ParamsMeta.SpringForcePowerk = {min:0,max:10*1000};
 ParamsMeta.LiquidDensityk = {min:0,max:1000};
 ParamsMeta.FresnelFactork = {min:0,max:10*1000};
 ParamsMeta.RefractionIncidencek = {min:0,max:3000};
-ParamsMeta.BackgroundChequerRepeat = {min:1,max:100};
-ParamsMeta.BackgroundRingRepeat = {min:1,max:100};
+ParamsMeta.BackgroundChequerRepeat = {min:1,max:50};
+ParamsMeta.BackgroundRingRepeat = {min:1,max:800};
 ParamsMeta.LightX = {min:-900,max:900};
 ParamsMeta.LightY = {min:-900,max:900};
 ParamsMeta.LightZ = {min:-900,max:900};
@@ -77,4 +79,5 @@ ParamsMeta.ParticleRadiusk = {min:0,max:1000};
 ParamsMeta.WorldScalek = {min:0,max:1000};
 ParamsMeta.BackgroundTimeScalek = {min:0,max:1000};
 
+ParamsMeta.ChromaOffsetk = {min:-10,max:10};
 
